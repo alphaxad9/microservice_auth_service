@@ -1,0 +1,254 @@
+replicaCount: 1
+
+image:
+  repository: nginx
+  pullPolicy: IfNotPresent
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+config:
+  rabbitmq:
+    host: "rabbitmq.infrastructure.svc.cluster.local"  
+    port: "5672"     
+    vhost: "microservice_one"       
+    queues:
+      auth: "microservice_one.events"         
+      bookingExchange: "booking.events"
+      postService: "post_service.events"
+  
+  redis:
+    host: "redis.infrastructure.svc.cluster.local"
+    port: "6379"
+    db: "0"
+    socketTimeout: "2"
+    connectTimeout: "2"
+    retryOnTimeout: "true"
+  
+  django:
+    settingsModule: "core.settings.prod"
+    debug: "False"
+    allowedHosts: "*.example.com,localhost"
+    defaultFromEmail: "noreply@example.com"
+    logLevel: "INFO"
+    
+  nginx:
+    useProxyProtocol: "false"
+    sslRedirect: "true"
+    forceSslRedirect: "true"
+    hsts: "true"
+    hstsMaxAge: "15724800"
+    hstsIncludeSubdomains: "true"
+    proxyBodySize: "10m"
+    upstreamKeepaliveConnections: "100"
+    workerProcesses: "4"
+    logFormatEscapeJson: "true"
+    enableBrotli: "true"
+  
+  services:
+    auth:
+      cacheTtl: {}
+    
+  postgres:
+    host: "postgres.infrastructure.svc.cluster.local"
+    port: "5432"
+    db: "authdb"
+
+  kafka:
+    brokers: "kafka.infrastructure.svc.cluster.local:9092"
+    topic: "microservice_one.events"
+    groupId: "my_backend_id"
+    securityProtocol: "PLAINTEXT"
+    enableAutoCommit: "true"
+    autoOffsetReset: "earliest"
+  auth:
+    # Django Core
+    djangoSecretKey: ""
+    djangoDebug: "False"
+    djangoAllowedHosts: "localhost,127.0.0.1,yourdomain.com"
+    djangoLanguageCode: "en-us"
+    djangoTimeZone: "UTC"
+    djangoSettingsModule: "core.settings.prod"
+    defaultFromEmail: "noreply@example.com"
+    logLevel: "INFO"
+    
+    # Database
+    postgresEngine: "django.db.backends.postgresql"
+    postgresUser: ""
+    postgresPassword: ""
+    postgresHost: "postgres.infrastructure.svc.cluster.local"
+    postgresPort: "5432"
+    postgresDb: "authdb"
+    
+
+
+    
+    # RabbitMQ
+    rabbitmqUser: ""
+    rabbitmqPass: ""
+    rabbitmqHost: "rabbitmq.infrastructure.svc.cluster.local"
+    rabbitmqPort: "5672"
+    rabbitmqQueue: "microservice_one.events"
+    rabbitmqVhost: "microservice_one"
+    
+    # Kafka
+    kafkaBrokers: "kafka.infrastructure.svc.cluster.local:9092"
+    kafkaTopic: "microservice_one.events"
+    kafkaGroupId: "my_backend_id"
+    kafkaSecurityProtocol: "PLAINTEXT"
+    kafkaEnableAutoCommit: "false"
+    kafkaAutoOffsetReset: "earliest"
+    
+    # Redis
+    redisHost: "redis.infrastructure.svc.cluster.local"
+    redisPort: "6379"
+    redisDb: "0"
+    redisSocketTimeout: "2"
+    redisConnectTimeout: "2"
+    redisRetryOnTimeout: "true"
+    
+    # Cache TTLs
+    likesCacheTtl: "300"
+    authorTimelineCacheTtl: "120"
+    
+    # Channel Layers
+    channelLayerHosts: "redis.infrastructure.svc.cluster.local:6379"
+    channelLayerCapacity: "1000"
+    channelLayerExpiry: "10"
+    # CORS Settings
+    corsAllowedOrigins: "http://localhost:3000,https://yourdomain.com"
+    csrfTrustedOrigins: "http://localhost:3000,https://yourdomain.com"
+    corsAllowCredentials: "True"
+
+backend:
+  auth:
+    image:
+      repository: alphaxad9/auth_service
+      tag: "0.0.1"
+    port: 8000
+     
+    # Django Core
+
+    djangoDebug: "False"
+    djangoAllowedHosts: "localhost,127.0.0.1,yourdomain.com"
+    djangoLanguageCode: "en-us"
+    djangoTimeZone: "UTC"
+    djangoSettingsModule: "core.settings.prod"
+    defaultFromEmail: "noreply@example.com"
+    logLevel: "INFO"
+    
+
+    # Database
+    postgresEngine: "django.db.backends.postgresql"
+    postgresHost: "postgres.infrastructure.svc.cluster.local"
+    postgresPort: "5432"
+    postgresDb: "authdb"
+
+    # RabbitMQ
+    rabbitmqHost: "rabbitmq.infrastructure.svc.cluster.local"
+    rabbitmqPort: "5672"
+    rabbitmqQueue: "microservice_one.events"
+    rabbitmqVhost: "microservice_one"
+    
+    # Kafka
+    kafkaBrokers: "kafka.infrastructure.svc.cluster.local:9092"
+    kafkaTopic: "microservice_one.events"
+    kafkaGroupId: "my_backend_id"
+    kafkaSecurityProtocol: "PLAINTEXT"
+    kafkaEnableAutoCommit: "false"
+    kafkaAutoOffsetReset: "earliest"
+    
+    # Redis
+    redisHost: "redis.infrastructure.svc.cluster.local"
+    redisPort: "6379"
+    redisDb: "0"
+    redisSocketTimeout: "2"
+    redisConnectTimeout: "2"
+    redisRetryOnTimeout: "true"
+    
+    # Cache TTLs
+    likesCacheTtl: "300"
+    authorTimelineCacheTtl: "120"
+    
+    # Channel Layers
+    channelLayerHosts: "redis.infrastructure.svc.cluster.local:6379"
+    channelLayerCapacity: "1000"
+    channelLayerExpiry: "10"
+   
+
+secrets:
+  rabbitmq: rabbitmq-credentials
+  postgres: postgres-credentials
+  kafka: kafka-credentials
+  auth: auth-secrets
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+
+httpRoute:
+  enabled: false
+  annotations: {}
+  parentRefs:
+  - name: gateway
+    sectionName: http
+  hostnames:
+  - chart-example.local
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /headers
+
+resources: {}
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+
+volumes: []
+
+volumeMounts: []
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
