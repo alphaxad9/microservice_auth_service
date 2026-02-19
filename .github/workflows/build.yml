@@ -26,24 +26,6 @@ jobs:
       
       POSTGRES_ENGINE: django.db.backends.sqlite3
       POSTGRES_DB: ':memory:'
-      POSTGRES_HOST: ''
-      POSTGRES_PORT: ''
-      POSTGRES_USER: ''
-      POSTGRES_PASSWORD: ''
-
-      SIGNING_KEY: |
-        -----BEGIN PRIVATE KEY-----
-        TEST_KEY_REMOVED_FOR_BREVITY
-        -----END PRIVATE KEY-----
-
-      VERIFYING_KEY: |
-        -----BEGIN PUBLIC KEY-----
-        TEST_KEY_REMOVED_FOR_BREVITY
-        -----END PUBLIC KEY-----
-
-      RABBITMQ_HOST: ''
-      KAFKA_BROKERS: ''
-      REDIS_URL: ''
 
     steps:
       - uses: actions/checkout@v4
@@ -51,7 +33,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-          cache: pip
 
       - name: Install deps
         run: |
@@ -72,6 +53,7 @@ jobs:
       contents: read
       packages: write
       security-events: write
+      actions: read   # ⭐ ADD THIS (helps telemetry + SARIF)
 
     steps:
       - uses: actions/checkout@v4
@@ -81,7 +63,7 @@ jobs:
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -89,7 +71,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+          images: ghcr.io/${{ github.repository_owner }}/auth-service
           tags: |
             type=sha,format=long
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
@@ -102,19 +84,19 @@ jobs:
           load: true
           platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
 
-      # ⭐ THIS IS THE CRITICAL FIX
       - name: Trivy scan
         uses: aquasecurity/trivy-action@0.24.0
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
+          image-ref: ghcr.io/${{ github.repository_owner }}/auth-service:sha-${{ github.sha }}
           format: sarif
           output: trivy.sarif
           severity: CRITICAL,HIGH
           github-pat: ${{ secrets.GITHUB_TOKEN }}
 
+      # ⭐ ONLY UPLOAD ON PUSH
       - name: Upload SARIF
+        if: github.event_name == 'push'
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy.sarif
