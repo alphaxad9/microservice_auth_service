@@ -25,11 +25,6 @@ data:
   POSTGRES_PORT: {{ .Values.config.auth.postgresPort | quote }}
   POSTGRES_DB: {{ .Values.config.auth.postgresDb | quote }}
   
-  # Auth URLs
-  AUTH_SERVICE_URL: {{ .Values.config.auth.authServiceUrl | quote }}
-  AUTH_PUBLIC_KEY_URL: {{ .Values.config.auth.authPublicKeyUrl | quote }}
-  WALLET_SERVICE: {{ .Values.config.auth.walletService | quote }}
-  
   # ✅ Public Key (safe for ConfigMap)
   VERIFYING_KEY: |
     -----BEGIN PUBLIC KEY-----

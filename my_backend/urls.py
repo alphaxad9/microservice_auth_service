@@ -7,6 +7,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('zedvye_one/users/', include('src.apis.users.urls')),
     path('zedvye_one/profile/', include('src.apis.profile.urls')),
+    path('health/', include('src.apis.health.urls')),
+    
 ]
 if settings.DEBUG:
     urlpatterns += [

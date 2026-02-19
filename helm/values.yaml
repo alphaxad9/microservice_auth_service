@@ -34,9 +34,9 @@ config:
     retryOnTimeout: "true"
   
   django:
-    settingsModule: "core.settings.prod"
+    settingsModule: "my_backend.settings"
     debug: "False"
-    allowedHosts: "*.example.com,localhost"
+    allowedHosts: "*"
     defaultFromEmail: "noreply@example.com"
     logLevel: "INFO"
     
@@ -71,19 +71,16 @@ config:
     autoOffsetReset: "earliest"
   auth:
     # Django Core
-    djangoSecretKey: ""
     djangoDebug: "False"
-    djangoAllowedHosts: "localhost,127.0.0.1,yourdomain.com"
+    djangoAllowedHosts: "*"    
     djangoLanguageCode: "en-us"
     djangoTimeZone: "UTC"
-    djangoSettingsModule: "core.settings.prod"
+    djangoSettingsModule: "my_backend.settings"
     defaultFromEmail: "noreply@example.com"
     logLevel: "INFO"
     
     # Database
     postgresEngine: "django.db.backends.postgresql"
-    postgresUser: ""
-    postgresPassword: ""
     postgresHost: "postgres.infrastructure.svc.cluster.local"
     postgresPort: "5432"
     postgresDb: "authdb"
@@ -92,8 +89,6 @@ config:
 
     
     # RabbitMQ
-    rabbitmqUser: ""
-    rabbitmqPass: ""
     rabbitmqHost: "rabbitmq.infrastructure.svc.cluster.local"
     rabbitmqPort: "5672"
     rabbitmqQueue: "microservice_one.events"
@@ -133,15 +128,15 @@ backend:
     image:
       repository: alphaxad9/auth_service
       tag: "0.0.1"
-    port: 8080
+    port: 8000
      
     # Django Core
 
     djangoDebug: "False"
-    djangoAllowedHosts: "localhost,127.0.0.1,yourdomain.com"
+    djangoAllowedHosts: "*"    
     djangoLanguageCode: "en-us"
     djangoTimeZone: "UTC"
-    djangoSettingsModule: "core.settings.prod"
+    djangoSettingsModule: "my_backend.settings"
     defaultFromEmail: "noreply@example.com"
     logLevel: "INFO"
     
@@ -188,7 +183,7 @@ secrets:
   rabbitmq: rabbitmq-credentials
   postgres: postgres-credentials
   kafka: kafka-credentials
-  auth: auth-secrets
+  auth: helm-auth 
 
 podAnnotations: {}
 podLabels: {}
@@ -228,14 +223,33 @@ httpRoute:
 
 resources: {}
 
+# helm/values.yaml — update these sections:
+
 livenessProbe:
   httpGet:
-    path: /
+    path: /health/   # ← Changed from / to /health/
     port: http
+  initialDelaySeconds: 10
+  periodSeconds: 0
+  timeoutSeconds: 1
+  failureThreshold: 3
+
 readinessProbe:
   httpGet:
-    path: /
+    path: /health/   # ← Changed from / to /health/
     port: http
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 1
+  failureThreshold: 3
+
+startupProbe:  # ← Add this if not present (critical for slow-starting Django apps)
+  httpGet:
+    path: /health/
+    port: http
+  failureThreshold: 30  # Gives app 5 minutes to start (30 × 10s)
+  periodSeconds: 10
+  timeoutSeconds: 1
 
 autoscaling:
   enabled: false
