@@ -18,7 +18,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --user --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # =========================
 # Stage 2 — Runtime
@@ -30,9 +30,9 @@ RUN groupadd -r django && useradd -r -g django django
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PATH="/home/django/.local/bin:$PATH" \
     DJANGO_SETTINGS_MODULE=my_backend.settings \
-    UVICORN_WORKERS=4
+    UVICORN_WORKERS=4 \
+    PATH="/usr/local/bin:$PATH"
 
 WORKDIR /app
 
@@ -43,16 +43,18 @@ RUN apt-get update \
     curl \
  && rm -rf /var/lib/apt/lists/*
 
-# Copy installed packages
-COPY --from=builder /root/.local /home/django/.local
+# Copy installed packages from builder to system site-packages
+COPY --from=builder /usr/local/lib/python3.10/site-packages/ /usr/local/lib/python3.10/site-packages/
+COPY --from=builder /usr/local/bin/ /usr/local/bin/
 
 # Copy entrypoint script first (for better caching)
 COPY --chown=django:django entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Copy project code
+# Copy project with proper ownership
 COPY --chown=django:django . .
 
+# Create necessary directories and set permissions
 RUN mkdir -p /app/staticfiles /app/media \
  && chown -R django:django /app
 
@@ -73,5 +75,4 @@ CMD uvicorn my_backend.asgi:application \
     --host 0.0.0.0 \
     --port 8000 \
     --workers ${UVICORN_WORKERS} \
-    --loop asyncio \
-    --http httptools
+    --loop asyncio
