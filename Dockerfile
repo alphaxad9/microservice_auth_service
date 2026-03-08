@@ -18,7 +18,8 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# FIXED: Added timeout and retries to prevent network timeouts
+RUN pip install --retries 10 --timeout 100 --no-cache-dir -r requirements.txt
 
 # =========================
 # Stage 2 — Runtime
@@ -54,9 +55,11 @@ RUN chmod +x /entrypoint.sh
 # Copy project with proper ownership
 COPY --chown=django:django . .
 
-# Create necessary directories and set permissions
-RUN mkdir -p /app/staticfiles /app/media \
- && chown -R django:django /app
+# Create necessary directories with correct permissions
+# IMPORTANT: Create both static and staticfiles directories to match both settings and k8s mounts
+RUN mkdir -p /app/static /app/media /app/staticfiles \
+ && chown -R django:django /app \
+ && chmod -R 755 /app/static /app/media /app/staticfiles
 
 # Switch to non-root user
 USER django
@@ -70,9 +73,5 @@ EXPOSE 8000
 # Use entrypoint script (runs migrations + collectstatic at runtime)
 ENTRYPOINT ["/entrypoint.sh"]
 
-# Production-ready uvicorn with multiple workers
-CMD uvicorn my_backend.asgi:application \
-    --host 0.0.0.0 \
-    --port 8000 \
-    --workers ${UVICORN_WORKERS} \
-    --loop asyncio
+# FIXED: Use JSON format for CMD (recommended for Kubernetes)
+CMD ["uvicorn", "my_backend.asgi:application", "--host", "0.0.0.0", "--port", "8000", "--workers", "4", "--loop", "asyncio"]
