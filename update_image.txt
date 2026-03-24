@@ -1,62 +1,19 @@
-# 1. First, build the NEW image with your updated Dockerfile
-docker build -t alphaxad9/auth-service:0.0.2 .
 
-# 2. Also tag as latest
-docker tag alphaxad9/auth-service:0.0.2 alphaxad9/auth-service:latest
+# Build with version 0.0.6
+docker build -t alphaxad9/auth-service:0.0.6 .
 
-# 3. Push both to Docker Hub
-docker push alphaxad9/auth-service:0.0.2
+# Tag as latest
+docker tag alphaxad9/auth-service:0.0.6 alphaxad9/auth-service:latest
+
+# Push to Docker Hub
+docker push alphaxad9/auth-service:0.0.6
 docker push alphaxad9/auth-service:latest
 
-# 4. Verify the images have different digests
+# Verify the images
 docker images alphaxad9/auth-service --digests
 
+# Load into Kind cluster
+kind load docker-image alphaxad9/auth-service:0.0.6 --name payment-service
 
-
-
-
-
-
-# Update the deployment to use the new image
-kubectl set image deployment/auth-service -n auth-service auth-service=alphaxad9/auth-service:0.0.2
-
-# Check the rollout status
-kubectl rollout status deployment/auth-service -n auth-service
-
-# Watch the new pod
-kubectl get pods -n auth-service -w
-
-
-
-
-
-
-
-
-
-
-# Commit and push the changes to Git
-git add services/auth-service/base/kustomization.yaml
-git commit -m "Update auth-service image to 0.0.2 with fixed Dockerfile"
-git push
-
-# Then in ArgoCD, sync the application
-# Either via UI or CLI:
-argocd app sync auth-service
-
-
-
-
-
-
-# Check if the new image is being used
-kubectl get deployment auth-service -n auth-service -o jsonpath='{.spec.template.spec.containers[0].image}'
-
-# Should show: alphaxad9/auth-service:0.0.2
-docker run --rm alphaxad9/auth-service:0.0.2 python -c "import django; print(f'Django {django.get_version()} installed successfully')"
-# Force ArgoCD to refresh and sync
-argocd app get auth-service --refresh
-argocd app sync auth-service
-
-# Watch the new pod roll out
-kubectl get pods -n auth-service -w
+# Verify it's loaded
+docker exec -it payment-service-control-plane crictl images | grep auth-service
