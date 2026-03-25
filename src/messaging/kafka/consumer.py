@@ -8,7 +8,6 @@ from typing import Any, Dict, Callable, Awaitable
 from confluent_kafka import Consumer, KafkaException
 
 import django
-# ⚠️ MUST MATCH YOUR ACTUAL PROJECT SETTINGS
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "my_backend.settings")
 django.setup()
 
@@ -25,9 +24,12 @@ from src.messaging.kafka.config import (
 
 logger = logging.getLogger("kafka.consumer")
 
+# Registry maps event_type -> handler(event_dict)
+# Profile and User handlers expect raw dict payloads (no ACL translation needed)
 HANDLER_REGISTRY: dict[str, Callable[[dict[str, Any]], Awaitable[None]]] = {}
 HANDLER_REGISTRY.update(PROFILE_EVENT_HANDLERS)
 HANDLER_REGISTRY.update(USER_EVENT_HANDLERS)
+
 
 def is_duplicate(message_id: str) -> bool:
     if not message_id or message_id == "unknown":
@@ -38,12 +40,14 @@ def is_duplicate(message_id: str) -> bool:
     cache.set(key, "1", timeout=7 * 24 * 3600)
     return False
 
-async def process_event(event_type: str, data: dict):
+
+async def process_event(event_type: str, event_data: dict[str, Any]) -> None:
     handler = HANDLER_REGISTRY.get(event_type)
     if handler:
-        await handler(data)
+        await handler(event_data)
     else:
         logger.warning(f"⚠️ No handler registered for {event_type}")
+
 
 class KafkaDomainConsumer:
     def __init__(self):
@@ -79,7 +83,6 @@ class KafkaDomainConsumer:
 
                 if is_duplicate(message_id):
                     logger.info(f"🔁 Duplicate skipped: {message_id}")
-                    # Still commit to advance offset
                     self.consumer.commit(msg, asynchronous=False)
                     continue
 
@@ -88,13 +91,22 @@ class KafkaDomainConsumer:
                     payload = json.loads(raw_value)
                 except json.JSONDecodeError:
                     logger.warning(f"⚠️ Non-JSON message (event_type={event_type})")
-                    payload = {"raw_value": raw_value}
+                    self.consumer.commit(msg, asynchronous=False)
+                    continue
 
                 try:
-                    # Use asyncio.run() — safe in sync context
-                    asyncio.run(process_event(event_type, payload))
-                    logger.info(f"✅ Processed: {event_type}")
-                    self.consumer.commit(msg, asynchronous=False)
+                    # ✅ Route events: only profile.* and user.* are processed
+                    if event_type.startswith("profile.") or event_type.startswith("user."):
+                        # Pass raw dict payload directly — no ACL translation needed
+                        asyncio.run(process_event(event_type, payload))
+                        logger.info(f"✅ Processed: {event_type}")
+                        self.consumer.commit(msg, asynchronous=False)
+                    else:
+                        logger.info(f"🔕 Ignored unrelated event: {event_type}")
+                        # Still commit to avoid reprocessing
+                        self.consumer.commit(msg, asynchronous=False)
+                        continue
+
                 except Exception as e:
                     logger.exception(f"💥 Failed to process {event_type}: {e}")
                     # Do NOT commit — retry on next poll
@@ -107,9 +119,11 @@ class KafkaDomainConsumer:
             self.consumer.close()
             logger.info("🔌 Consumer closed.")
 
+
 def signal_handler(sig, frame):
     logger.info("Shutdown signal received.")
     sys.exit(0)
+
 
 if __name__ == "__main__":
     logging.basicConfig(
