@@ -162,7 +162,9 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [tuple(host.split(':')) for host in CHANNEL_LAYER_HOSTS],
+            "hosts": [
+    (host.split(':')[0], int(host.split(':')[1]))
+    for host in CHANNEL_LAYER_HOSTS],
             "capacity": int(os.getenv('CHANNEL_LAYER_CAPACITY', 1000)),
             "expiry": int(os.getenv('CHANNEL_LAYER_EXPIRY', 10)),
         },
