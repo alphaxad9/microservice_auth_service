@@ -165,17 +165,16 @@ REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', '')
 REDIS_HOST = os.getenv('REDIS_HOST', 'redis.infrastructure.svc.cluster.local')
 REDIS_PORT = os.getenv('REDIS_PORT', '6379')
 
-# Construct Redis URL with password if provided
-if REDIS_PASSWORD:
-    REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/0"
-else:
-    REDIS_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/0"
+# Build Redis URL with password
+REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/0"
 
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [REDIS_URL],
+            "hosts": [REDIS_URL],  # ← String URL, NOT tuple!
+            "capacity": int(os.getenv('CHANNEL_LAYER_CAPACITY', 1000)),
+            "expiry": int(os.getenv('CHANNEL_LAYER_EXPIRY', 10)),
         },
     },
 }

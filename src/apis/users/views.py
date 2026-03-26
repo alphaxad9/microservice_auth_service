@@ -44,6 +44,21 @@ class PublicKeyView(APIView):
 
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request):
+        serializer = UserProfileSerializer(request.user)
+        return Response({'user': serializer.data}, status=status.HTTP_200_OK)
+
+    def patch(self, request: Request):
+        serializer = UserProfileSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response({'user': UserProfileSerializer(user).data}, status=status.HTTP_200_OK)
+        return Response({'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+@method_decorator(ensure_csrf_cookie, name='dispatch')
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
@@ -480,21 +495,6 @@ class CustomTokenRefreshView(TokenRefreshView):
             return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
 
-
-@method_decorator(ensure_csrf_cookie, name='dispatch')
-class UserProfileView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request: Request):
-        serializer = UserProfileSerializer(request.user)
-        return Response({'user': serializer.data}, status=status.HTTP_200_OK)
-
-    def patch(self, request: Request):
-        serializer = UserProfileSerializer(request.user, data=request.data, partial=True)
-        if serializer.is_valid():
-            user = serializer.save()
-            return Response({'user': UserProfileSerializer(user).data}, status=status.HTTP_200_OK)
-        return Response({'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
