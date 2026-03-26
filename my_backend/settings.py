@@ -158,15 +158,24 @@ AUTH_USER_MODEL = 'users.ORMUser'
 
 CHANNEL_LAYER_HOSTS = os.getenv('CHANNEL_LAYER_HOSTS', '127.0.0.1:6379').split(',')
 
+# In settings.py, add after your CHANNEL_LAYERS config:
+
+# Get Redis password from environment
+REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', '')
+REDIS_HOST = os.getenv('REDIS_HOST', 'redis.infrastructure.svc.cluster.local')
+REDIS_PORT = os.getenv('REDIS_PORT', '6379')
+
+# Construct Redis URL with password if provided
+if REDIS_PASSWORD:
+    REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/0"
+else:
+    REDIS_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/0"
+
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [
-    (host.split(':')[0], int(host.split(':')[1]))
-    for host in CHANNEL_LAYER_HOSTS],
-            "capacity": int(os.getenv('CHANNEL_LAYER_CAPACITY', 1000)),
-            "expiry": int(os.getenv('CHANNEL_LAYER_EXPIRY', 10)),
+            "hosts": [REDIS_URL],
         },
     },
 }

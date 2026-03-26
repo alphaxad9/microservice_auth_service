@@ -1,19 +1,19 @@
 
-# Build with version 0.1.0
-docker build -t alphaxad9/auth-service:0.1.0 .
+# Build with version 0.1.1
+docker build -t alphaxad9/auth-service:0.1.1 .
 
 # Tag as latest
-docker tag alphaxad9/auth-service:0.1.0 alphaxad9/auth-service:latest
+docker tag alphaxad9/auth-service:0.1.1 alphaxad9/auth-service:latest
 
 # Push to Docker Hub
-docker push alphaxad9/auth-service:0.1.0
+docker push alphaxad9/auth-service:0.1.1
 docker push alphaxad9/auth-service:latest
 
 # Verify the images
 docker images alphaxad9/auth-service --digests
 
 # Load into Kind cluster
-kind load docker-image alphaxad9/auth-service:0.1.0 --name payment-service
+kind load docker-image alphaxad9/auth-service:0.1.1 --name payment-service
 
 # Verify it's loaded
 docker exec -it payment-service-control-plane crictl images | grep auth-service
