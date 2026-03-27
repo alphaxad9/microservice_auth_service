@@ -1,4 +1,3 @@
-# src/infrastructure/apps/users/views.py
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
@@ -25,6 +24,30 @@ logger = logging.getLogger(__name__)
 from src.application.user.factory import create_user_use_case
 from django.http import HttpResponse
 
+
+# Helper function for consistent cookie setting
+def set_auth_cookies(response, access_token, refresh_token):
+    """Set authentication cookies consistently for cross-origin support"""
+    # Access token cookie (short-lived)
+    response.set_cookie(
+        key='access',
+        value=access_token,
+        httponly=True,
+        secure=True,  # Required for SameSite=None
+        samesite='None',  # Required for cross-origin
+        max_age=timedelta(minutes=5).total_seconds(),
+        path='/'
+    )
+    # Refresh token cookie (longer-lived)
+    response.set_cookie(
+        key='refresh',
+        value=refresh_token,
+        httponly=True,
+        secure=True,  # Required for SameSite=None
+        samesite='None',  # Required for cross-origin
+        max_age=timedelta(days=1).total_seconds(),
+        path='/'
+    )
 
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
@@ -58,6 +81,7 @@ class UserProfileView(APIView):
             return Response({'user': UserProfileSerializer(user).data}, status=status.HTTP_200_OK)
         return Response({'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
@@ -89,25 +113,11 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         }
 
         response = Response(response_data, status=status.HTTP_200_OK)
-        response.set_cookie(
-            key='access',
-            value=tokens['access'],
-            httponly=True,
-            samesite='Strict',
-            secure=False,
-            max_age=timedelta(minutes=5).total_seconds()
-        )
-        response.set_cookie(
-            key='refresh',
-            value=tokens['refresh'],
-            httponly=True,
-            samesite='Strict',
-            secure=False,
-            max_age=timedelta(days=1).total_seconds()
-        )
+        
+        # Use helper function for consistent cookie setting
+        set_auth_cookies(response, tokens['access'], tokens['refresh'])
 
         return response
-
 
     def _get_client_ip(self, request: Request) -> str:
         """Extract client IP address from request"""
@@ -155,30 +165,15 @@ class UserCreationView(APIView):
                 }
 
                 response = Response(response_data, status=status.HTTP_201_CREATED)
-                response.set_cookie(
-                    key='access',  # Match JWTCookieAuthentication default
-                    value=access,
-                    httponly=True,
-                    samesite='Strict',
-                    secure=False,  # False for dev
-                    max_age=timedelta(minutes=5).total_seconds()
-                )
-                response.set_cookie(
-                    key='refresh',  # Match JWTCookieAuthentication default
-                    value=str(refresh),
-                    httponly=True,
-                    samesite='Strict',
-                    secure=False,
-                    max_age=timedelta(days=1).total_seconds()
-                )
+                
+                # Use helper function for consistent cookie setting
+                set_auth_cookies(response, access, str(refresh))
                 
                 return response
             except Exception as e:
                 logger.error(f"Error creating user: {str(e)}")
                 return Response({'errors': {'non_field_errors': [str(e)]}}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-    
-
 
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
@@ -187,7 +182,7 @@ class UserLogoutView(APIView):
 
     def post(self, request: Request):
         try:
-            refresh_token = request.COOKIES.get(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'])
+            refresh_token = request.COOKIES.get('refresh')
             if not refresh_token:
                 return Response({'message': 'Refresh token cookie required'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -212,8 +207,8 @@ class UserLogoutView(APIView):
             logout(request)
 
             response = Response({'message': 'Logged out successfully'}, status=status.HTTP_200_OK)
-            response.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE'], samesite='Strict')
-            response.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'], samesite='Strict')
+            response.delete_cookie('access', path='/')
+            response.delete_cookie('refresh', path='/')
             return response
         except TokenError as e:
             logger.error(f"Logout error: Invalid refresh token - {str(e)}")
@@ -230,8 +225,6 @@ class UserLogoutView(APIView):
         else:
             ip = request.META.get('REMOTE_ADDR')
         return ip or 'unknown'
-    
-
 
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
@@ -273,6 +266,58 @@ class UserUpdateProfileView(APIView):
             logger.error(f"Error updating user profile: {str(e)}")
             return Response({"error": "Failed to update profile"}, status=500)
 
+
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class CustomTokenRefreshView(TokenRefreshView):
+    def post(self, request: Request, *args, **kwargs) -> Response:
+        refresh_token = request.COOKIES.get('refresh')
+        if not refresh_token:
+            return Response({'message': 'Refresh token cookie required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            token = RefreshToken(refresh_token)
+            access_token = str(token.access_token)
+            data = {'access': access_token}
+            if settings.SIMPLE_JWT['ROTATE_REFRESH_TOKENS']:
+                token.set_jti()
+                token.set_exp()
+                data['refresh'] = str(token)
+
+            response = Response({
+                'message': 'Token refreshed successfully',
+                'access': data['access'],
+                'refresh': data.get('refresh', refresh_token)
+            }, status=status.HTTP_200_OK)
+            
+            # Update cookies with consistent settings
+            response.set_cookie(
+                key='access',
+                value=data['access'],
+                httponly=True,
+                secure=True,
+                samesite='None',
+                max_age=timedelta(minutes=5).total_seconds(),
+                path='/'
+            )
+            
+            if 'refresh' in data:
+                response.set_cookie(
+                    key='refresh',
+                    value=data['refresh'],
+                    httponly=True,
+                    secure=True,
+                    samesite='None',
+                    max_age=timedelta(days=1).total_seconds(),
+                    path='/'
+                )
+
+            return response
+        except TokenError as e:
+            logger.error(f"Refresh error: Invalid refresh token - {str(e)}")
+            return Response({'message': 'Invalid or expired refresh token'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Refresh error: {str(e)}")
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class UserByIdView(APIView):
     # Change this line:
@@ -446,54 +491,6 @@ class UserDeletionView(APIView):
 
 
 
-
-@method_decorator(ensure_csrf_cookie, name='dispatch')
-class CustomTokenRefreshView(TokenRefreshView):
-    def post(self, request: Request, *args, **kwargs) -> Response:
-        refresh_token = request.COOKIES.get(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'])
-        if not refresh_token:
-            return Response({'message': 'Refresh token cookie required'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            token = RefreshToken(refresh_token)
-            access_token = str(token.access_token)
-            data = {'access': access_token}
-            if settings.SIMPLE_JWT['ROTATE_REFRESH_TOKENS']:
-                token.set_jti()
-                token.set_exp()
-                data['refresh'] = str(token)
-
-            response = Response({
-                'message': 'Token refreshed successfully',
-                'access': data['access'],
-                'refresh': data.get('refresh', refresh_token)
-            }, status=status.HTTP_200_OK)
-            response.set_cookie(
-                key=settings.SIMPLE_JWT['AUTH_COOKIE'],
-                value=data['access'],
-                httponly=True,
-                samesite='Strict',
-                secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
-                max_age=timedelta(minutes=5).total_seconds()
-            )
-            if 'refresh' in data:
-                response.set_cookie(
-                    key=settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'],
-                    value=data['refresh'],
-                    httponly=True,
-                    samesite='Strict',
-                    secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
-                    max_age=timedelta(days=1).total_seconds()
-                )
-
-            return response
-        except TokenError as e:
-            logger.error(f"Refresh error: Invalid refresh token - {str(e)}")
-            return Response({'message': 'Invalid or expired refresh token'}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            logger.error(f"Refresh error: {str(e)}")
-            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
 
 
 
