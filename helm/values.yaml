@@ -126,8 +126,8 @@ config:
 backend:
   auth:
     image:
-      repository: alphaxad9/auth_service
-      tag: "0.0.1"
+      repository: alphaxad9/auth-service
+      tag: "0.1.4"
     port: 8000
      
     # Django Core

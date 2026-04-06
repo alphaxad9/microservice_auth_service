@@ -1,0 +1,5 @@
+helm upgrade my-backend . \
+  --namespace auth-service \
+  --install \
+  --wait \
+  --timeout 10m

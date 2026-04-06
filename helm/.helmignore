@@ -21,3 +21,23 @@
 .idea/
 *.tmproj
 .vscode/
+# Ignore version control
+.git
+.gitignore
+
+# Ignore binaries and helper tools
+bin/
+act
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore common OS files
+.DS_Store
+Thumbs.db
+
+# Ignore test files if they aren't part of the chart
+tests/
