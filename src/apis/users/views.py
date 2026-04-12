@@ -33,8 +33,8 @@ def set_auth_cookies(response, access_token, refresh_token):
         key='access',
         value=access_token,
         httponly=True,
-        secure=True,  # Required for SameSite=None
-        samesite='None',  # Required for cross-origin
+        secure=False,  # Required for SameSite=None
+        samesite='Lax',  # Required for cross-origin
         max_age=timedelta(minutes=5).total_seconds(),
         path='/'
     )
@@ -43,8 +43,8 @@ def set_auth_cookies(response, access_token, refresh_token):
         key='refresh',
         value=refresh_token,
         httponly=True,
-        secure=True,  # Required for SameSite=None
-        samesite='None',  # Required for cross-origin
+        secure=False,  # Required for SameSite=None
+        samesite='Lax',  # Required for cross-origin
         max_age=timedelta(days=1).total_seconds(),
         path='/'
     )
@@ -294,8 +294,8 @@ class CustomTokenRefreshView(TokenRefreshView):
                 key='access',
                 value=data['access'],
                 httponly=True,
-                secure=True,
-                samesite='None',
+                secure=False,
+                samesite='Lax',
                 max_age=timedelta(minutes=5).total_seconds(),
                 path='/'
             )
@@ -305,8 +305,8 @@ class CustomTokenRefreshView(TokenRefreshView):
                     key='refresh',
                     value=data['refresh'],
                     httponly=True,
-                    secure=True,
-                    samesite='None',
+                    secure=False,
+                    samesite='Lax',
                     max_age=timedelta(days=1).total_seconds(),
                     path='/'
                 )
@@ -479,8 +479,8 @@ class UserDeletionView(APIView):
             response = Response({'message': 'User account deleted successfully'}, status=status.HTTP_200_OK)
 
             # Remove cookies
-            response.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE'], samesite='Strict')
-            response.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'], samesite='Strict')
+            response.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE'], samesite='Lax')
+            response.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'], samesite='Lax')
 
             return response
 
@@ -557,8 +557,8 @@ class UserSoftDeleteView(APIView):
                 'user': user_dto.to_dict()
             }, status=status.HTTP_200_OK)
 
-            response.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE'], samesite='Strict')
-            response.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'], samesite='Strict')
+            response.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE'], samesite='Lax')
+            response.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'], samesite='Lax')
             return response
 
         except Exception as e:

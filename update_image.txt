@@ -1,19 +1,19 @@
 kubectl port-forward -n auth-service svc/auth-service 8000:8000
-# Build with version 0.1.4
-docker build -t alphaxad9/auth-service:0.1.4 .
+# Build with version 0.1.5
+docker build -t alphaxad9/auth-service:0.1.5 .
 
 # Tag as latest
-docker tag alphaxad9/auth-service:0.1.4 alphaxad9/auth-service:latest
+docker tag alphaxad9/auth-service:0.1.5 alphaxad9/auth-service:latest
 
 # Push to Docker Hub
-docker push alphaxad9/auth-service:0.1.4
+docker push alphaxad9/auth-service:0.1.5
 docker push alphaxad9/auth-service:latest
 
 # Verify the images
 docker images alphaxad9/auth-service --digests
 
 # Load into Kind cluster
-kind load docker-image alphaxad9/auth-service:0.1.4 --name payment-service
+kind load docker-image alphaxad9/auth-service:0.1.5 --name payment-service
 
 # Verify it's loaded
 docker exec -it payment-service-control-plane crictl images | grep auth-service
