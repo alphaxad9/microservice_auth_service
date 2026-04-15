@@ -1,0 +1,2674 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/restartedAt: "2026-04-13T21:39:16+02:00"
+      prometheus.io/path: /metrics
+      prometheus.io/port: "8000"
+      prometheus.io/scrape: "true"
+    creationTimestamp: "2026-04-13T19:39:16Z"
+    generateName: auth-api-7ff78f7d9b-
+    labels:
+      app: auth-service
+      component: api
+      pod-template-hash: 7ff78f7d9b
+    name: auth-api-7ff78f7d9b-b7s4r
+    namespace: auth-service
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: ReplicaSet
+      name: auth-api-7ff78f7d9b
+      uid: 82f6ab5f-8738-4756-ad77-853c557a0ff6
+    resourceVersion: "2323382"
+    uid: cb472292-8038-42b5-be88-8b1ccbbe781d
+  spec:
+    containers:
+    - env:
+      - name: POD_NAME
+        valueFrom:
+          fieldRef:
+            apiVersion: v1
+            fieldPath: metadata.name
+      - name: POD_NAMESPACE
+        valueFrom:
+          fieldRef:
+            apiVersion: v1
+            fieldPath: metadata.namespace
+      - name: DJANGO_SETTINGS_MODULE
+        value: my_backend.settings
+      envFrom:
+      - configMapRef:
+          name: auth-config
+      - secretRef:
+          name: auth-secrets
+      - secretRef:
+          name: postgres-credentials
+      - secretRef:
+          name: rabbitmq-credentials
+      - secretRef:
+          name: kafka-credentials
+      - secretRef:
+          name: redis-credentials
+      image: alphaxad9/auth-service:0.1.5
+      imagePullPolicy: IfNotPresent
+      livenessProbe:
+        failureThreshold: 3
+        httpGet:
+          httpHeaders:
+          - name: Host
+            value: auth-service
+          path: /health/
+          port: http
+          scheme: HTTP
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        successThreshold: 1
+        timeoutSeconds: 5
+      name: auth-api
+      ports:
+      - containerPort: 8000
+        name: http
+        protocol: TCP
+      - containerPort: 8001
+        name: metrics
+        protocol: TCP
+      readinessProbe:
+        failureThreshold: 2
+        httpGet:
+          httpHeaders:
+          - name: Host
+            value: auth-service
+          path: /health/
+          port: http
+          scheme: HTTP
+        initialDelaySeconds: 20
+        periodSeconds: 5
+        successThreshold: 1
+        timeoutSeconds: 3
+      resources:
+        limits:
+          cpu: 500m
+          memory: 512Mi
+        requests:
+          cpu: 100m
+          memory: 256Mi
+      startupProbe:
+        failureThreshold: 30
+        httpGet:
+          httpHeaders:
+          - name: Host
+            value: auth-service
+          path: /health/
+          port: http
+          scheme: HTTP
+        periodSeconds: 10
+        successThreshold: 1
+        timeoutSeconds: 5
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /app/static
+        name: static-files
+      - mountPath: /app/media
+        name: media-files
+      - mountPath: /app/keys
+        name: keys
+        readOnly: true
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-cz9z6
+        readOnly: true
+    dnsPolicy: ClusterFirst
+    enableServiceLinks: true
+    nodeName: payment-service-control-plane
+    preemptionPolicy: PreemptLowerPriority
+    priority: 0
+    restartPolicy: Always
+    schedulerName: default-scheduler
+    securityContext:
+      fsGroup: 1000
+      runAsGroup: 1000
+      runAsNonRoot: true
+      runAsUser: 1000
+    serviceAccount: auth-service-sa
+    serviceAccountName: auth-service-sa
+    terminationGracePeriodSeconds: 30
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+    volumes:
+    - name: static-files
+      persistentVolumeClaim:
+        claimName: auth-service-static-pvc
+    - name: media-files
+      persistentVolumeClaim:
+        claimName: auth-service-media-pvc
+    - emptyDir: {}
+      name: tmp
+    - name: keys
+      secret:
+        defaultMode: 420
+        items:
+        - key: SIGNING_KEY
+          path: private.pem
+        secretName: auth-secrets
+    - name: kube-api-access-cz9z6
+      projected:
+        defaultMode: 420
+        sources:
+        - serviceAccountToken:
+            expirationSeconds: 3607
+            path: token
+        - configMap:
+            items:
+            - key: ca.crt
+              path: ca.crt
+            name: kube-root-ca.crt
+        - downwardAPI:
+            items:
+            - fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+              path: namespace
+  status:
+    conditions:
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-14T18:17:00Z"
+      status: "True"
+      type: PodReadyToStartContainers
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-13T19:39:16Z"
+      status: "True"
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-14T18:18:42Z"
+      status: "True"
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-14T18:18:42Z"
+      status: "True"
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-13T19:39:16Z"
+      status: "True"
+      type: PodScheduled
+    containerStatuses:
+    - containerID: containerd://f8bd80849ab30cde2fa132320382fd7be5fa1cd44b8a56f54e8a81517b6c050a
+      image: docker.io/alphaxad9/auth-service:0.1.5
+      imageID: docker.io/library/import-2026-04-13@sha256:069d342e964b5ab815fd1e999e193fc285ab100d0b9c204998365567d1fd953c
+      lastState:
+        terminated:
+          containerID: containerd://702f7ca558e081e6aa295db8b38bc8f01682c5eaf4db54e33426bb89ae5e3d2c
+          exitCode: 1
+          finishedAt: "2026-04-14T18:17:37Z"
+          reason: Error
+          startedAt: "2026-04-14T18:17:30Z"
+      name: auth-api
+      ready: true
+      restartCount: 11
+      started: true
+      state:
+        running:
+          startedAt: "2026-04-14T18:18:05Z"
+    hostIP: 172.18.0.2
+    hostIPs:
+    - ip: 172.18.0.2
+    phase: Running
+    podIP: 10.244.0.24
+    podIPs:
+    - ip: 10.244.0.24
+    qosClass: Burstable
+    startTime: "2026-04-13T19:39:16Z"
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/restartedAt: "2026-04-13T21:39:16+02:00"
+    creationTimestamp: "2026-04-13T19:39:16Z"
+    generateName: auth-consumer-79876c74c-
+    labels:
+      app: auth-service
+      component: consumer
+      pod-template-hash: 79876c74c
+    name: auth-consumer-79876c74c-djd4r
+    namespace: auth-service
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: ReplicaSet
+      name: auth-consumer-79876c74c
+      uid: 1101f6a5-59f9-4f4d-bcae-c41649d7af0b
+    resourceVersion: "2322542"
+    uid: 4522118a-37c9-4a28-b8ed-03d345e5e139
+  spec:
+    containers:
+    - command:
+      - python
+      - manage.py
+      - run_kafka_consumer
+      env:
+      - name: POD_NAME
+        valueFrom:
+          fieldRef:
+            apiVersion: v1
+            fieldPath: metadata.name
+      - name: POD_NAMESPACE
+        valueFrom:
+          fieldRef:
+            apiVersion: v1
+            fieldPath: metadata.namespace
+      - name: SERVICE_COMPONENT
+        value: consumer
+      envFrom:
+      - configMapRef:
+          name: auth-config
+      - secretRef:
+          name: auth-secrets
+      - secretRef:
+          name: postgres-credentials
+      - secretRef:
+          name: rabbitmq-credentials
+      - secretRef:
+          name: kafka-credentials
+      - secretRef:
+          name: redis-credentials
+      image: alphaxad9/auth-service:0.1.5
+      imagePullPolicy: IfNotPresent
+      name: auth-consumer
+      resources:
+        limits:
+          cpu: 250m
+          memory: 512Mi
+        requests:
+          cpu: 100m
+          memory: 256Mi
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /app/keys
+        name: keys
+        readOnly: true
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-q6zct
+        readOnly: true
+    dnsPolicy: ClusterFirst
+    enableServiceLinks: true
+    nodeName: payment-service-control-plane
+    preemptionPolicy: PreemptLowerPriority
+    priority: 0
+    restartPolicy: Always
+    schedulerName: default-scheduler
+    securityContext:
+      fsGroup: 1000
+      runAsGroup: 1000
+      runAsNonRoot: true
+      runAsUser: 1000
+    serviceAccount: auth-service-sa
+    serviceAccountName: auth-service-sa
+    terminationGracePeriodSeconds: 30
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+    volumes:
+    - name: keys
+      secret:
+        defaultMode: 420
+        items:
+        - key: SIGNING_KEY
+          path: private.pem
+        secretName: auth-secrets
+    - name: kube-api-access-q6zct
+      projected:
+        defaultMode: 420
+        sources:
+        - serviceAccountToken:
+            expirationSeconds: 3607
+            path: token
+        - configMap:
+            items:
+            - key: ca.crt
+              path: ca.crt
+            name: kube-root-ca.crt
+        - downwardAPI:
+            items:
+            - fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+              path: namespace
+  status:
+    conditions:
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-14T18:16:55Z"
+      status: "True"
+      type: PodReadyToStartContainers
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-13T19:39:16Z"
+      status: "True"
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-14T18:16:55Z"
+      status: "True"
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-14T18:16:55Z"
+      status: "True"
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-13T19:39:16Z"
+      status: "True"
+      type: PodScheduled
+    containerStatuses:
+    - containerID: containerd://378905fcbed45a45a10d738a0cf4e83b4cdb9a825234615c401776730e05aeb2
+      image: docker.io/alphaxad9/auth-service:0.1.5
+      imageID: docker.io/library/import-2026-04-13@sha256:069d342e964b5ab815fd1e999e193fc285ab100d0b9c204998365567d1fd953c
+      lastState:
+        terminated:
+          containerID: containerd://607895612ad807431dbeec0408162f5aecaf5cf1cd9130f24bfe41d4edd439fa
+          exitCode: 255
+          finishedAt: "2026-04-14T18:16:14Z"
+          reason: Unknown
+          startedAt: "2026-04-14T17:37:16Z"
+      name: auth-consumer
+      ready: true
+      restartCount: 6
+      started: true
+      state:
+        running:
+          startedAt: "2026-04-14T18:16:55Z"
+    hostIP: 172.18.0.2
+    hostIPs:
+    - ip: 172.18.0.2
+    phase: Running
+    podIP: 10.244.0.8
+    podIPs:
+    - ip: 10.244.0.8
+    qosClass: Burstable
+    startTime: "2026-04-13T19:39:16Z"
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/restartedAt: "2026-04-13T21:39:16+02:00"
+    creationTimestamp: "2026-04-13T19:39:16Z"
+    generateName: auth-producer-9f948497f-
+    labels:
+      app: auth-service
+      component: producer
+      pod-template-hash: 9f948497f
+    name: auth-producer-9f948497f-4cw9w
+    namespace: auth-service
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: ReplicaSet
+      name: auth-producer-9f948497f
+      uid: a5a7a486-38ed-4da1-a8db-9de5f927307d
+    resourceVersion: "2322535"
+    uid: d34e5155-ee74-4d85-9e0a-601986bec489
+  spec:
+    containers:
+    - command:
+      - python
+      - manage.py
+      - run_kafka_publisher
+      env:
+      - name: POD_NAME
+        valueFrom:
+          fieldRef:
+            apiVersion: v1
+            fieldPath: metadata.name
+      - name: POD_NAMESPACE
+        valueFrom:
+          fieldRef:
+            apiVersion: v1
+            fieldPath: metadata.namespace
+      - name: SERVICE_COMPONENT
+        value: producer
+      envFrom:
+      - configMapRef:
+          name: auth-config
+      - secretRef:
+          name: auth-secrets
+      - secretRef:
+          name: postgres-credentials
+      - secretRef:
+          name: rabbitmq-credentials
+      - secretRef:
+          name: kafka-credentials
+      - secretRef:
+          name: redis-credentials
+      image: alphaxad9/auth-service:0.1.5
+      imagePullPolicy: IfNotPresent
+      name: auth-producer
+      resources:
+        limits:
+          cpu: 250m
+          memory: 512Mi
+        requests:
+          cpu: 100m
+          memory: 256Mi
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /app/keys
+        name: keys
+        readOnly: true
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-qhmmb
+        readOnly: true
+    dnsPolicy: ClusterFirst
+    enableServiceLinks: true
+    nodeName: payment-service-control-plane
+    preemptionPolicy: PreemptLowerPriority
+    priority: 0
+    restartPolicy: Always
+    schedulerName: default-scheduler
+    securityContext:
+      fsGroup: 1000
+      runAsGroup: 1000
+      runAsNonRoot: true
+      runAsUser: 1000
+    serviceAccount: auth-service-sa
+    serviceAccountName: auth-service-sa
+    terminationGracePeriodSeconds: 30
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+    volumes:
+    - name: keys
+      secret:
+        defaultMode: 420
+        items:
+        - key: SIGNING_KEY
+          path: private.pem
+        secretName: auth-secrets
+    - name: kube-api-access-qhmmb
+      projected:
+        defaultMode: 420
+        sources:
+        - serviceAccountToken:
+            expirationSeconds: 3607
+            path: token
+        - configMap:
+            items:
+            - key: ca.crt
+              path: ca.crt
+            name: kube-root-ca.crt
+        - downwardAPI:
+            items:
+            - fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+              path: namespace
+  status:
+    conditions:
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-14T18:16:55Z"
+      status: "True"
+      type: PodReadyToStartContainers
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-13T19:39:16Z"
+      status: "True"
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-14T18:16:55Z"
+      status: "True"
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-14T18:16:55Z"
+      status: "True"
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: "2026-04-13T19:39:16Z"
+      status: "True"
+      type: PodScheduled
+    containerStatuses:
+    - containerID: containerd://760452e10b0791617593fab4e88f6590c695859e9a04e7031d12256461ed5c5b
+      image: docker.io/alphaxad9/auth-service:0.1.5
+      imageID: docker.io/library/import-2026-04-13@sha256:069d342e964b5ab815fd1e999e193fc285ab100d0b9c204998365567d1fd953c
+      lastState:
+        terminated:
+          containerID: containerd://8a8f43003494e3e2f984383acfe035fd535af8c4caad28b6d3cccdbb7e35e23e
+          exitCode: 255
+          finishedAt: "2026-04-14T18:16:14Z"
+          reason: Unknown
+          startedAt: "2026-04-14T17:37:16Z"
+      name: auth-producer
+      ready: true
+      restartCount: 6
+      started: true
+      state:
+        running:
+          startedAt: "2026-04-14T18:16:55Z"
+    hostIP: 172.18.0.2
+    hostIPs:
+    - ip: 172.18.0.2
+    phase: Running
+    podIP: 10.244.0.5
+    podIPs:
+    - ip: 10.244.0.5
+    qosClass: Burstable
+    startTime: "2026-04-13T19:39:16Z"
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:/Service:auth-service/auth-service
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{"prometheus.io/port":"8000","prometheus.io/scrape":"true"},"labels":{"app":"auth-service","component":"api","environment":"dev"},"name":"auth-service","namespace":"auth-service"},"spec":{"ports":[{"name":"http","port":8000,"protocol":"TCP","targetPort":"http"},{"name":"metrics","port":8001,"protocol":"TCP","targetPort":"metrics"}],"selector":{"app":"auth-service","component":"api"},"type":"ClusterIP"}}
+      prometheus.io/port: "8000"
+      prometheus.io/scrape: "true"
+    creationTimestamp: "2026-02-25T15:46:59Z"
+    labels:
+      app: auth-service
+      component: api
+      environment: dev
+    name: auth-service
+    namespace: auth-service
+    resourceVersion: "2267274"
+    uid: c8672ccb-e1ad-4b93-8d85-2c2b770eb2d9
+  spec:
+    clusterIP: 10.96.95.93
+    clusterIPs:
+    - 10.96.95.93
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 8000
+      protocol: TCP
+      targetPort: http
+    - name: metrics
+      port: 8001
+      protocol: TCP
+      targetPort: metrics
+    selector:
+      app: auth-service
+      component: api
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:apps/Deployment:auth-service/auth-api
+      deployment.kubernetes.io/revision: "4"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"auth-service","component":"api","environment":"dev","managed-by":"gitops"},"name":"auth-api","namespace":"auth-service"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"auth-service","component":"api"}},"template":{"metadata":{"annotations":{"prometheus.io/path":"/metrics","prometheus.io/port":"8000","prometheus.io/scrape":"true"},"labels":{"app":"auth-service","component":"api"}},"spec":{"containers":[{"env":[{"name":"POD_NAME","valueFrom":{"fieldRef":{"fieldPath":"metadata.name"}}},{"name":"POD_NAMESPACE","valueFrom":{"fieldRef":{"fieldPath":"metadata.namespace"}}},{"name":"DJANGO_SETTINGS_MODULE","value":"my_backend.settings"}],"envFrom":[{"configMapRef":{"name":"auth-config"}},{"secretRef":{"name":"auth-secrets"}},{"secretRef":{"name":"postgres-credentials"}},{"secretRef":{"name":"rabbitmq-credentials"}},{"secretRef":{"name":"kafka-credentials"}},{"secretRef":{"name":"redis-credentials"}}],"image":"alphaxad9/auth-service:0.1.5","imagePullPolicy":"IfNotPresent","livenessProbe":{"failureThreshold":3,"httpGet":{"httpHeaders":[{"name":"Host","value":"auth-service"}],"path":"/health/","port":"http"},"initialDelaySeconds":30,"periodSeconds":10,"timeoutSeconds":5},"name":"auth-api","ports":[{"containerPort":8000,"name":"http"},{"containerPort":8001,"name":"metrics"}],"readinessProbe":{"failureThreshold":2,"httpGet":{"httpHeaders":[{"name":"Host","value":"auth-service"}],"path":"/health/","port":"http"},"initialDelaySeconds":20,"periodSeconds":5,"timeoutSeconds":3},"resources":{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"256Mi"}},"startupProbe":{"failureThreshold":30,"httpGet":{"httpHeaders":[{"name":"Host","value":"auth-service"}],"path":"/health/","port":"http"},"periodSeconds":10,"timeoutSeconds":5},"volumeMounts":[{"mountPath":"/app/static","name":"static-files"},{"mountPath":"/app/media","name":"media-files"},{"mountPath":"/app/keys","name":"keys","readOnly":true}]}],"securityContext":{"fsGroup":1000,"runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000},"serviceAccountName":"auth-service-sa","volumes":[{"name":"static-files","persistentVolumeClaim":{"claimName":"auth-service-static-pvc"}},{"name":"media-files","persistentVolumeClaim":{"claimName":"auth-service-media-pvc"}},{"emptyDir":{},"name":"tmp"},{"name":"keys","secret":{"items":[{"key":"SIGNING_KEY","path":"private.pem"}],"secretName":"auth-secrets"}}]}}}}
+    creationTimestamp: "2026-04-11T08:27:13Z"
+    generation: 7
+    labels:
+      app: auth-service
+      component: api
+      environment: dev
+      managed-by: gitops
+    name: auth-api
+    namespace: auth-service
+    resourceVersion: "2323386"
+    uid: 91dc42ad-08a0-465e-a2cb-4f44e01396eb
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: auth-service
+        component: api
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2026-04-13T21:39:16+02:00"
+          prometheus.io/path: /metrics
+          prometheus.io/port: "8000"
+          prometheus.io/scrape: "true"
+        creationTimestamp: null
+        labels:
+          app: auth-service
+          component: api
+      spec:
+        containers:
+        - env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: DJANGO_SETTINGS_MODULE
+            value: my_backend.settings
+          envFrom:
+          - configMapRef:
+              name: auth-config
+          - secretRef:
+              name: auth-secrets
+          - secretRef:
+              name: postgres-credentials
+          - secretRef:
+              name: rabbitmq-credentials
+          - secretRef:
+              name: kafka-credentials
+          - secretRef:
+              name: redis-credentials
+          image: alphaxad9/auth-service:0.1.5
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders:
+              - name: Host
+                value: auth-service
+              path: /health/
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: auth-api
+          ports:
+          - containerPort: 8000
+            name: http
+            protocol: TCP
+          - containerPort: 8001
+            name: metrics
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 2
+            httpGet:
+              httpHeaders:
+              - name: Host
+                value: auth-service
+              path: /health/
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 3
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          startupProbe:
+            failureThreshold: 30
+            httpGet:
+              httpHeaders:
+              - name: Host
+                value: auth-service
+              path: /health/
+              port: http
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app/static
+            name: static-files
+          - mountPath: /app/media
+            name: media-files
+          - mountPath: /app/keys
+            name: keys
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          fsGroup: 1000
+          runAsGroup: 1000
+          runAsNonRoot: true
+          runAsUser: 1000
+        serviceAccount: auth-service-sa
+        serviceAccountName: auth-service-sa
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: static-files
+          persistentVolumeClaim:
+            claimName: auth-service-static-pvc
+        - name: media-files
+          persistentVolumeClaim:
+            claimName: auth-service-media-pvc
+        - emptyDir: {}
+          name: tmp
+        - name: keys
+          secret:
+            defaultMode: 420
+            items:
+            - key: SIGNING_KEY
+              path: private.pem
+            secretName: auth-secrets
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-04-13T13:32:33Z"
+      lastUpdateTime: "2026-04-13T19:39:57Z"
+      message: ReplicaSet "auth-api-7ff78f7d9b" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2026-04-14T18:18:42Z"
+      lastUpdateTime: "2026-04-14T18:18:42Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    observedGeneration: 7
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:apps/Deployment:auth-service/auth-consumer
+      deployment.kubernetes.io/revision: "3"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"auth-service","component":"consumer","environment":"dev","managed-by":"gitops"},"name":"auth-consumer","namespace":"auth-service"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"auth-service","component":"consumer"}},"template":{"metadata":{"labels":{"app":"auth-service","component":"consumer"}},"spec":{"containers":[{"command":["python","manage.py","run_kafka_consumer"],"env":[{"name":"POD_NAME","valueFrom":{"fieldRef":{"fieldPath":"metadata.name"}}},{"name":"POD_NAMESPACE","valueFrom":{"fieldRef":{"fieldPath":"metadata.namespace"}}},{"name":"SERVICE_COMPONENT","value":"consumer"}],"envFrom":[{"configMapRef":{"name":"auth-config"}},{"secretRef":{"name":"auth-secrets"}},{"secretRef":{"name":"postgres-credentials"}},{"secretRef":{"name":"rabbitmq-credentials"}},{"secretRef":{"name":"kafka-credentials"}},{"secretRef":{"name":"redis-credentials"}}],"image":"alphaxad9/auth-service:0.1.5","imagePullPolicy":"IfNotPresent","name":"auth-consumer","resources":{"limits":{"cpu":"250m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"256Mi"}},"volumeMounts":[{"mountPath":"/app/keys","name":"keys","readOnly":true}]}],"securityContext":{"fsGroup":1000,"runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000},"serviceAccountName":"auth-service-sa","volumes":[{"name":"keys","secret":{"items":[{"key":"SIGNING_KEY","path":"private.pem"}],"secretName":"auth-secrets"}}]}}}}
+    creationTimestamp: "2026-04-04T18:49:17Z"
+    generation: 7
+    labels:
+      app: auth-service
+      component: consumer
+      environment: dev
+      managed-by: gitops
+    name: auth-consumer
+    namespace: auth-service
+    resourceVersion: "2274754"
+    uid: 81f0a49f-a946-4517-9388-c568c27775ef
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: auth-service
+        component: consumer
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2026-04-13T21:39:16+02:00"
+        creationTimestamp: null
+        labels:
+          app: auth-service
+          component: consumer
+      spec:
+        containers:
+        - command:
+          - python
+          - manage.py
+          - run_kafka_consumer
+          env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: SERVICE_COMPONENT
+            value: consumer
+          envFrom:
+          - configMapRef:
+              name: auth-config
+          - secretRef:
+              name: auth-secrets
+          - secretRef:
+              name: postgres-credentials
+          - secretRef:
+              name: rabbitmq-credentials
+          - secretRef:
+              name: kafka-credentials
+          - secretRef:
+              name: redis-credentials
+          image: alphaxad9/auth-service:0.1.5
+          imagePullPolicy: IfNotPresent
+          name: auth-consumer
+          resources:
+            limits:
+              cpu: 250m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app/keys
+            name: keys
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          fsGroup: 1000
+          runAsGroup: 1000
+          runAsNonRoot: true
+          runAsUser: 1000
+        serviceAccount: auth-service-sa
+        serviceAccountName: auth-service-sa
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: keys
+          secret:
+            defaultMode: 420
+            items:
+            - key: SIGNING_KEY
+              path: private.pem
+            secretName: auth-secrets
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-04-13T18:30:59Z"
+      lastUpdateTime: "2026-04-13T18:30:59Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2026-04-13T13:31:53Z"
+      lastUpdateTime: "2026-04-13T19:39:18Z"
+      message: ReplicaSet "auth-consumer-79876c74c" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 7
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:apps/Deployment:auth-service/auth-producer
+      deployment.kubernetes.io/revision: "3"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"auth-service","component":"producer","environment":"dev","managed-by":"gitops"},"name":"auth-producer","namespace":"auth-service"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"auth-service","component":"producer"}},"template":{"metadata":{"labels":{"app":"auth-service","component":"producer"}},"spec":{"containers":[{"command":["python","manage.py","run_kafka_publisher"],"env":[{"name":"POD_NAME","valueFrom":{"fieldRef":{"fieldPath":"metadata.name"}}},{"name":"POD_NAMESPACE","valueFrom":{"fieldRef":{"fieldPath":"metadata.namespace"}}},{"name":"SERVICE_COMPONENT","value":"producer"}],"envFrom":[{"configMapRef":{"name":"auth-config"}},{"secretRef":{"name":"auth-secrets"}},{"secretRef":{"name":"postgres-credentials"}},{"secretRef":{"name":"rabbitmq-credentials"}},{"secretRef":{"name":"kafka-credentials"}},{"secretRef":{"name":"redis-credentials"}}],"image":"alphaxad9/auth-service:0.1.5","imagePullPolicy":"IfNotPresent","name":"auth-producer","resources":{"limits":{"cpu":"250m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"256Mi"}},"volumeMounts":[{"mountPath":"/app/keys","name":"keys","readOnly":true}]}],"securityContext":{"fsGroup":1000,"runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000},"serviceAccountName":"auth-service-sa","volumes":[{"name":"keys","secret":{"items":[{"key":"SIGNING_KEY","path":"private.pem"}],"secretName":"auth-secrets"}}]}}}}
+    creationTimestamp: "2026-04-04T18:49:17Z"
+    generation: 7
+    labels:
+      app: auth-service
+      component: producer
+      environment: dev
+      managed-by: gitops
+    name: auth-producer
+    namespace: auth-service
+    resourceVersion: "2290925"
+    uid: f085e25b-76fe-43b1-a1e6-3b64a86bdc7f
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: auth-service
+        component: producer
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2026-04-13T21:39:16+02:00"
+        creationTimestamp: null
+        labels:
+          app: auth-service
+          component: producer
+      spec:
+        containers:
+        - command:
+          - python
+          - manage.py
+          - run_kafka_publisher
+          env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: SERVICE_COMPONENT
+            value: producer
+          envFrom:
+          - configMapRef:
+              name: auth-config
+          - secretRef:
+              name: auth-secrets
+          - secretRef:
+              name: postgres-credentials
+          - secretRef:
+              name: rabbitmq-credentials
+          - secretRef:
+              name: kafka-credentials
+          - secretRef:
+              name: redis-credentials
+          image: alphaxad9/auth-service:0.1.5
+          imagePullPolicy: IfNotPresent
+          name: auth-producer
+          resources:
+            limits:
+              cpu: 250m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app/keys
+            name: keys
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          fsGroup: 1000
+          runAsGroup: 1000
+          runAsNonRoot: true
+          runAsUser: 1000
+        serviceAccount: auth-service-sa
+        serviceAccountName: auth-service-sa
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: keys
+          secret:
+            defaultMode: 420
+            items:
+            - key: SIGNING_KEY
+              path: private.pem
+            secretName: auth-secrets
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2026-04-13T13:31:52Z"
+      lastUpdateTime: "2026-04-13T19:39:18Z"
+      message: ReplicaSet "auth-producer-9f948497f" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    - lastTransitionTime: "2026-04-14T13:49:23Z"
+      lastUpdateTime: "2026-04-14T13:49:23Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    observedGeneration: 7
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:apps/Deployment:auth-service/auth-api
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2026-04-11T08:27:13Z"
+    generation: 2
+    labels:
+      app: auth-service
+      component: api
+      pod-template-hash: 6497f7cf74
+    name: auth-api-6497f7cf74
+    namespace: auth-service
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: auth-api
+      uid: 91dc42ad-08a0-465e-a2cb-4f44e01396eb
+    resourceVersion: "2243648"
+    uid: ca78f399-68e8-459d-afe0-e3de35bff6b7
+  spec:
+    replicas: 0
+    selector:
+      matchLabels:
+        app: auth-service
+        component: api
+        pod-template-hash: 6497f7cf74
+    template:
+      metadata:
+        annotations:
+          prometheus.io/path: /metrics
+          prometheus.io/port: "8000"
+          prometheus.io/scrape: "true"
+        creationTimestamp: null
+        labels:
+          app: auth-service
+          component: api
+          pod-template-hash: 6497f7cf74
+      spec:
+        containers:
+        - env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: DJANGO_SETTINGS_MODULE
+            value: my_backend.settings
+          envFrom:
+          - configMapRef:
+              name: auth-config
+          - secretRef:
+              name: auth-secrets
+          - secretRef:
+              name: postgres-credentials
+          - secretRef:
+              name: rabbitmq-credentials
+          - secretRef:
+              name: kafka-credentials
+          - secretRef:
+              name: redis-credentials
+          image: alphaxad9/auth-service:0.1.4
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders:
+              - name: Host
+                value: auth-service
+              path: /health/
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: auth-api
+          ports:
+          - containerPort: 8000
+            name: http
+            protocol: TCP
+          - containerPort: 8001
+            name: metrics
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 2
+            httpGet:
+              httpHeaders:
+              - name: Host
+                value: auth-service
+              path: /health/
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 3
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          startupProbe:
+            failureThreshold: 30
+            httpGet:
+              httpHeaders:
+              - name: Host
+                value: auth-service
+              path: /health/
+              port: http
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app/static
+            name: static-files
+          - mountPath: /app/media
+            name: media-files
+          - mountPath: /app/keys
+            name: keys
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          fsGroup: 1000
+          runAsGroup: 1000
+          runAsNonRoot: true
+          runAsUser: 1000
+        serviceAccount: auth-service-sa
+        serviceAccountName: auth-service-sa
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: static-files
+          persistentVolumeClaim:
+            claimName: auth-service-static-pvc
+        - name: media-files
+          persistentVolumeClaim:
+            claimName: auth-service-media-pvc
+        - emptyDir: {}
+          name: tmp
+        - name: keys
+          secret:
+            defaultMode: 420
+            items:
+            - key: SIGNING_KEY
+              path: private.pem
+            secretName: auth-secrets
+  status:
+    observedGeneration: 2
+    replicas: 0
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:apps/Deployment:auth-service/auth-api
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "2"
+    creationTimestamp: "2026-04-12T09:21:18Z"
+    generation: 2
+    labels:
+      app: auth-service
+      component: api
+      pod-template-hash: 65c8659b97
+    name: auth-api-65c8659b97
+    namespace: auth-service
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: auth-api
+      uid: 91dc42ad-08a0-465e-a2cb-4f44e01396eb
+    resourceVersion: "2267517"
+    uid: 2735baa4-5acb-4563-a7ab-3b3b3decbf6f
+  spec:
+    replicas: 0
+    selector:
+      matchLabels:
+        app: auth-service
+        component: api
+        pod-template-hash: 65c8659b97
+    template:
+      metadata:
+        annotations:
+          prometheus.io/path: /metrics
+          prometheus.io/port: "8000"
+          prometheus.io/scrape: "true"
+        creationTimestamp: null
+        labels:
+          app: auth-service
+          component: api
+          pod-template-hash: 65c8659b97
+      spec:
+        containers:
+        - env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: DJANGO_SETTINGS_MODULE
+            value: my_backend.settings
+          envFrom:
+          - configMapRef:
+              name: auth-config
+          - secretRef:
+              name: auth-secrets
+          - secretRef:
+              name: postgres-credentials
+          - secretRef:
+              name: rabbitmq-credentials
+          - secretRef:
+              name: kafka-credentials
+          - secretRef:
+              name: redis-credentials
+          image: alphaxad9/auth-service:0.1.5
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders:
+              - name: Host
+                value: auth-service
+              path: /health/
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: auth-api
+          ports:
+          - containerPort: 8000
+            name: http
+            protocol: TCP
+          - containerPort: 8001
+            name: metrics
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 2
+            httpGet:
+              httpHeaders:
+              - name: Host
+                value: auth-service
+              path: /health/
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 3
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          startupProbe:
+            failureThreshold: 30
+            httpGet:
+              httpHeaders:
+              - name: Host
+                value: auth-service
+              path: /health/
+              port: http
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app/static
+            name: static-files
+          - mountPath: /app/media
+            name: media-files
+          - mountPath: /app/keys
+            name: keys
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          fsGroup: 1000
+          runAsGroup: 1000
+          runAsNonRoot: true
+          runAsUser: 1000
+        serviceAccount: auth-service-sa
+        serviceAccountName: auth-service-sa
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: static-files
+          persistentVolumeClaim:
+            claimName: auth-service-static-pvc
+        - name: media-files
+          persistentVolumeClaim:
+            claimName: auth-service-media-pvc
+        - emptyDir: {}
+          name: tmp
+        - name: keys
+          secret:
+            defaultMode: 420
+            items:
+            - key: SIGNING_KEY
+              path: private.pem
+            secretName: auth-secrets
+  status:
+    observedGeneration: 2
+    replicas: 0
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:apps/Deployment:auth-service/auth-api
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "3"
+    creationTimestamp: "2026-04-13T18:41:08Z"
+    generation: 2
+    labels:
+      app: auth-service
+      component: api
+      pod-template-hash: 7c788cdfc7
+    name: auth-api-7c788cdfc7
+    namespace: auth-service
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: auth-api
+      uid: 91dc42ad-08a0-465e-a2cb-4f44e01396eb
+    resourceVersion: "2274849"
+    uid: 53826020-70d4-491e-9066-0475b2a8a5aa
+  spec:
+    replicas: 0
+    selector:
+      matchLabels:
+        app: auth-service
+        component: api
+        pod-template-hash: 7c788cdfc7
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2026-04-13T20:41:08+02:00"
+          prometheus.io/path: /metrics
+          prometheus.io/port: "8000"
+          prometheus.io/scrape: "true"
+        creationTimestamp: null
+        labels:
+          app: auth-service
+          component: api
+          pod-template-hash: 7c788cdfc7
+      spec:
+        containers:
+        - env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: DJANGO_SETTINGS_MODULE
+            value: my_backend.settings
+          envFrom:
+          - configMapRef:
+              name: auth-config
+          - secretRef:
+              name: auth-secrets
+          - secretRef:
+              name: postgres-credentials
+          - secretRef:
+              name: rabbitmq-credentials
+          - secretRef:
+              name: kafka-credentials
+          - secretRef:
+              name: redis-credentials
+          image: alphaxad9/auth-service:0.1.5
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders:
+              - name: Host
+                value: auth-service
+              path: /health/
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: auth-api
+          ports:
+          - containerPort: 8000
+            name: http
+            protocol: TCP
+          - containerPort: 8001
+            name: metrics
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 2
+            httpGet:
+              httpHeaders:
+              - name: Host
+                value: auth-service
+              path: /health/
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 3
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          startupProbe:
+            failureThreshold: 30
+            httpGet:
+              httpHeaders:
+              - name: Host
+                value: auth-service
+              path: /health/
+              port: http
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app/static
+            name: static-files
+          - mountPath: /app/media
+            name: media-files
+          - mountPath: /app/keys
+            name: keys
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          fsGroup: 1000
+          runAsGroup: 1000
+          runAsNonRoot: true
+          runAsUser: 1000
+        serviceAccount: auth-service-sa
+        serviceAccountName: auth-service-sa
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: static-files
+          persistentVolumeClaim:
+            claimName: auth-service-static-pvc
+        - name: media-files
+          persistentVolumeClaim:
+            claimName: auth-service-media-pvc
+        - emptyDir: {}
+          name: tmp
+        - name: keys
+          secret:
+            defaultMode: 420
+            items:
+            - key: SIGNING_KEY
+              path: private.pem
+            secretName: auth-secrets
+  status:
+    observedGeneration: 2
+    replicas: 0
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:apps/Deployment:auth-service/auth-api
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "4"
+    creationTimestamp: "2026-04-13T19:39:16Z"
+    generation: 1
+    labels:
+      app: auth-service
+      component: api
+      pod-template-hash: 7ff78f7d9b
+    name: auth-api-7ff78f7d9b
+    namespace: auth-service
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: auth-api
+      uid: 91dc42ad-08a0-465e-a2cb-4f44e01396eb
+    resourceVersion: "2323384"
+    uid: 82f6ab5f-8738-4756-ad77-853c557a0ff6
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: auth-service
+        component: api
+        pod-template-hash: 7ff78f7d9b
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2026-04-13T21:39:16+02:00"
+          prometheus.io/path: /metrics
+          prometheus.io/port: "8000"
+          prometheus.io/scrape: "true"
+        creationTimestamp: null
+        labels:
+          app: auth-service
+          component: api
+          pod-template-hash: 7ff78f7d9b
+      spec:
+        containers:
+        - env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: DJANGO_SETTINGS_MODULE
+            value: my_backend.settings
+          envFrom:
+          - configMapRef:
+              name: auth-config
+          - secretRef:
+              name: auth-secrets
+          - secretRef:
+              name: postgres-credentials
+          - secretRef:
+              name: rabbitmq-credentials
+          - secretRef:
+              name: kafka-credentials
+          - secretRef:
+              name: redis-credentials
+          image: alphaxad9/auth-service:0.1.5
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              httpHeaders:
+              - name: Host
+                value: auth-service
+              path: /health/
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: auth-api
+          ports:
+          - containerPort: 8000
+            name: http
+            protocol: TCP
+          - containerPort: 8001
+            name: metrics
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 2
+            httpGet:
+              httpHeaders:
+              - name: Host
+                value: auth-service
+              path: /health/
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 3
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          startupProbe:
+            failureThreshold: 30
+            httpGet:
+              httpHeaders:
+              - name: Host
+                value: auth-service
+              path: /health/
+              port: http
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app/static
+            name: static-files
+          - mountPath: /app/media
+            name: media-files
+          - mountPath: /app/keys
+            name: keys
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          fsGroup: 1000
+          runAsGroup: 1000
+          runAsNonRoot: true
+          runAsUser: 1000
+        serviceAccount: auth-service-sa
+        serviceAccountName: auth-service-sa
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: static-files
+          persistentVolumeClaim:
+            claimName: auth-service-static-pvc
+        - name: media-files
+          persistentVolumeClaim:
+            claimName: auth-service-media-pvc
+        - emptyDir: {}
+          name: tmp
+        - name: keys
+          secret:
+            defaultMode: 420
+            items:
+            - key: SIGNING_KEY
+              path: private.pem
+            secretName: auth-secrets
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:apps/Deployment:auth-service/auth-consumer
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "2"
+    creationTimestamp: "2026-04-12T09:21:18Z"
+    generation: 2
+    labels:
+      app: auth-service
+      component: consumer
+      pod-template-hash: 56fd9fb7c
+    name: auth-consumer-56fd9fb7c
+    namespace: auth-service
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: auth-consumer
+      uid: 81f0a49f-a946-4517-9388-c568c27775ef
+    resourceVersion: "2274753"
+    uid: fdb703eb-aeb2-45de-81df-631e62340ea4
+  spec:
+    replicas: 0
+    selector:
+      matchLabels:
+        app: auth-service
+        component: consumer
+        pod-template-hash: 56fd9fb7c
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: auth-service
+          component: consumer
+          pod-template-hash: 56fd9fb7c
+      spec:
+        containers:
+        - command:
+          - python
+          - manage.py
+          - run_kafka_consumer
+          env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: SERVICE_COMPONENT
+            value: consumer
+          envFrom:
+          - configMapRef:
+              name: auth-config
+          - secretRef:
+              name: auth-secrets
+          - secretRef:
+              name: postgres-credentials
+          - secretRef:
+              name: rabbitmq-credentials
+          - secretRef:
+              name: kafka-credentials
+          - secretRef:
+              name: redis-credentials
+          image: alphaxad9/auth-service:0.1.5
+          imagePullPolicy: IfNotPresent
+          name: auth-consumer
+          resources:
+            limits:
+              cpu: 250m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app/keys
+            name: keys
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          fsGroup: 1000
+          runAsGroup: 1000
+          runAsNonRoot: true
+          runAsUser: 1000
+        serviceAccount: auth-service-sa
+        serviceAccountName: auth-service-sa
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: keys
+          secret:
+            defaultMode: 420
+            items:
+            - key: SIGNING_KEY
+              path: private.pem
+            secretName: auth-secrets
+  status:
+    observedGeneration: 2
+    replicas: 0
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:apps/Deployment:auth-service/auth-consumer
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2026-04-04T18:49:17Z"
+    generation: 2
+    labels:
+      app: auth-service
+      component: consumer
+      pod-template-hash: 66bb8976b4
+    name: auth-consumer-66bb8976b4
+    namespace: auth-service
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: auth-consumer
+      uid: 81f0a49f-a946-4517-9388-c568c27775ef
+    resourceVersion: "2243554"
+    uid: a119875a-96e9-4368-ace3-6b4105d79239
+  spec:
+    replicas: 0
+    selector:
+      matchLabels:
+        app: auth-service
+        component: consumer
+        pod-template-hash: 66bb8976b4
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: auth-service
+          component: consumer
+          pod-template-hash: 66bb8976b4
+      spec:
+        containers:
+        - command:
+          - python
+          - manage.py
+          - run_kafka_consumer
+          env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: SERVICE_COMPONENT
+            value: consumer
+          envFrom:
+          - configMapRef:
+              name: auth-config
+          - secretRef:
+              name: auth-secrets
+          - secretRef:
+              name: postgres-credentials
+          - secretRef:
+              name: rabbitmq-credentials
+          - secretRef:
+              name: kafka-credentials
+          - secretRef:
+              name: redis-credentials
+          image: alphaxad9/auth-service:0.1.4
+          imagePullPolicy: IfNotPresent
+          name: auth-consumer
+          resources:
+            limits:
+              cpu: 250m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app/keys
+            name: keys
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          fsGroup: 1000
+          runAsGroup: 1000
+          runAsNonRoot: true
+          runAsUser: 1000
+        serviceAccount: auth-service-sa
+        serviceAccountName: auth-service-sa
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: keys
+          secret:
+            defaultMode: 420
+            items:
+            - key: SIGNING_KEY
+              path: private.pem
+            secretName: auth-secrets
+  status:
+    observedGeneration: 2
+    replicas: 0
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:apps/Deployment:auth-service/auth-consumer
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "3"
+    creationTimestamp: "2026-04-13T19:39:16Z"
+    generation: 1
+    labels:
+      app: auth-service
+      component: consumer
+      pod-template-hash: 79876c74c
+    name: auth-consumer-79876c74c
+    namespace: auth-service
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: auth-consumer
+      uid: 81f0a49f-a946-4517-9388-c568c27775ef
+    resourceVersion: "2274737"
+    uid: 1101f6a5-59f9-4f4d-bcae-c41649d7af0b
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: auth-service
+        component: consumer
+        pod-template-hash: 79876c74c
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2026-04-13T21:39:16+02:00"
+        creationTimestamp: null
+        labels:
+          app: auth-service
+          component: consumer
+          pod-template-hash: 79876c74c
+      spec:
+        containers:
+        - command:
+          - python
+          - manage.py
+          - run_kafka_consumer
+          env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: SERVICE_COMPONENT
+            value: consumer
+          envFrom:
+          - configMapRef:
+              name: auth-config
+          - secretRef:
+              name: auth-secrets
+          - secretRef:
+              name: postgres-credentials
+          - secretRef:
+              name: rabbitmq-credentials
+          - secretRef:
+              name: kafka-credentials
+          - secretRef:
+              name: redis-credentials
+          image: alphaxad9/auth-service:0.1.5
+          imagePullPolicy: IfNotPresent
+          name: auth-consumer
+          resources:
+            limits:
+              cpu: 250m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app/keys
+            name: keys
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          fsGroup: 1000
+          runAsGroup: 1000
+          runAsNonRoot: true
+          runAsUser: 1000
+        serviceAccount: auth-service-sa
+        serviceAccountName: auth-service-sa
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: keys
+          secret:
+            defaultMode: 420
+            items:
+            - key: SIGNING_KEY
+              path: private.pem
+            secretName: auth-secrets
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:apps/Deployment:auth-service/auth-producer
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "2"
+    creationTimestamp: "2026-04-12T09:21:18Z"
+    generation: 2
+    labels:
+      app: auth-service
+      component: producer
+      pod-template-hash: 596545fdfc
+    name: auth-producer-596545fdfc
+    namespace: auth-service
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: auth-producer
+      uid: f085e25b-76fe-43b1-a1e6-3b64a86bdc7f
+    resourceVersion: "2274750"
+    uid: 8fc9adcb-50c0-4e00-a865-f8006e93091f
+  spec:
+    replicas: 0
+    selector:
+      matchLabels:
+        app: auth-service
+        component: producer
+        pod-template-hash: 596545fdfc
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: auth-service
+          component: producer
+          pod-template-hash: 596545fdfc
+      spec:
+        containers:
+        - command:
+          - python
+          - manage.py
+          - run_kafka_publisher
+          env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: SERVICE_COMPONENT
+            value: producer
+          envFrom:
+          - configMapRef:
+              name: auth-config
+          - secretRef:
+              name: auth-secrets
+          - secretRef:
+              name: postgres-credentials
+          - secretRef:
+              name: rabbitmq-credentials
+          - secretRef:
+              name: kafka-credentials
+          - secretRef:
+              name: redis-credentials
+          image: alphaxad9/auth-service:0.1.5
+          imagePullPolicy: IfNotPresent
+          name: auth-producer
+          resources:
+            limits:
+              cpu: 250m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app/keys
+            name: keys
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          fsGroup: 1000
+          runAsGroup: 1000
+          runAsNonRoot: true
+          runAsUser: 1000
+        serviceAccount: auth-service-sa
+        serviceAccountName: auth-service-sa
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: keys
+          secret:
+            defaultMode: 420
+            items:
+            - key: SIGNING_KEY
+              path: private.pem
+            secretName: auth-secrets
+  status:
+    observedGeneration: 2
+    replicas: 0
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:apps/Deployment:auth-service/auth-producer
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "3"
+    creationTimestamp: "2026-04-13T19:39:16Z"
+    generation: 1
+    labels:
+      app: auth-service
+      component: producer
+      pod-template-hash: 9f948497f
+    name: auth-producer-9f948497f
+    namespace: auth-service
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: auth-producer
+      uid: f085e25b-76fe-43b1-a1e6-3b64a86bdc7f
+    resourceVersion: "2290920"
+    uid: a5a7a486-38ed-4da1-a8db-9de5f927307d
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: auth-service
+        component: producer
+        pod-template-hash: 9f948497f
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: "2026-04-13T21:39:16+02:00"
+        creationTimestamp: null
+        labels:
+          app: auth-service
+          component: producer
+          pod-template-hash: 9f948497f
+      spec:
+        containers:
+        - command:
+          - python
+          - manage.py
+          - run_kafka_publisher
+          env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: SERVICE_COMPONENT
+            value: producer
+          envFrom:
+          - configMapRef:
+              name: auth-config
+          - secretRef:
+              name: auth-secrets
+          - secretRef:
+              name: postgres-credentials
+          - secretRef:
+              name: rabbitmq-credentials
+          - secretRef:
+              name: kafka-credentials
+          - secretRef:
+              name: redis-credentials
+          image: alphaxad9/auth-service:0.1.5
+          imagePullPolicy: IfNotPresent
+          name: auth-producer
+          resources:
+            limits:
+              cpu: 250m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app/keys
+            name: keys
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          fsGroup: 1000
+          runAsGroup: 1000
+          runAsNonRoot: true
+          runAsUser: 1000
+        serviceAccount: auth-service-sa
+        serviceAccountName: auth-service-sa
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: keys
+          secret:
+            defaultMode: 420
+            items:
+            - key: SIGNING_KEY
+              path: private.pem
+            secretName: auth-secrets
+  status:
+    availableReplicas: 1
+    fullyLabeledReplicas: 1
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+- apiVersion: apps/v1
+  kind: ReplicaSet
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:apps/Deployment:auth-service/auth-producer
+      deployment.kubernetes.io/desired-replicas: "1"
+      deployment.kubernetes.io/max-replicas: "2"
+      deployment.kubernetes.io/revision: "1"
+    creationTimestamp: "2026-04-04T18:49:17Z"
+    generation: 2
+    labels:
+      app: auth-service
+      component: producer
+      pod-template-hash: d99b9f54
+    name: auth-producer-d99b9f54
+    namespace: auth-service
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Deployment
+      name: auth-producer
+      uid: f085e25b-76fe-43b1-a1e6-3b64a86bdc7f
+    resourceVersion: "2243541"
+    uid: 4320653b-6352-4568-a0ef-e191b8afde5c
+  spec:
+    replicas: 0
+    selector:
+      matchLabels:
+        app: auth-service
+        component: producer
+        pod-template-hash: d99b9f54
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: auth-service
+          component: producer
+          pod-template-hash: d99b9f54
+      spec:
+        containers:
+        - command:
+          - python
+          - manage.py
+          - run_kafka_publisher
+          env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: SERVICE_COMPONENT
+            value: producer
+          envFrom:
+          - configMapRef:
+              name: auth-config
+          - secretRef:
+              name: auth-secrets
+          - secretRef:
+              name: postgres-credentials
+          - secretRef:
+              name: rabbitmq-credentials
+          - secretRef:
+              name: kafka-credentials
+          - secretRef:
+              name: redis-credentials
+          image: alphaxad9/auth-service:0.1.4
+          imagePullPolicy: IfNotPresent
+          name: auth-producer
+          resources:
+            limits:
+              cpu: 250m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /app/keys
+            name: keys
+            readOnly: true
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          fsGroup: 1000
+          runAsGroup: 1000
+          runAsNonRoot: true
+          runAsUser: 1000
+        serviceAccount: auth-service-sa
+        serviceAccountName: auth-service-sa
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: keys
+          secret:
+            defaultMode: 420
+            items:
+            - key: SIGNING_KEY
+              path: private.pem
+            secretName: auth-secrets
+  status:
+    observedGeneration: 2
+    replicas: 0
+- apiVersion: v1
+  data:
+    DJANGO_DEBUG: RmFsc2U=
+    DJANGO_SECRET_KEY: ZGphbmdvLWluc2VjdXJlLWNoYW5nZS1tZS1pbi1wcm9k
+    INTERNAL_API_KEY: Y2hhbmdlLW1l
+    SERVICE_JWT: Y2hhbmdlLW1l
+    SIGNING_KEY: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2UUlCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktjd2dnU2pBZ0VBQW9JQkFRQzhybjVtTlY3a3M1YkEKQ0JKeWNXNnY3R0E2elhjOGNtWXdySU9wWHJiZytGSndkeDZiSVpxbXRQNktaZmpaK0EwSm41bXBmV3BnZHBkRAoycjJJQThPVE1BNWxtRTNWZjhpamtsamY5RktrUm1wZWh1MmZvamVmbldOZ1ZyR3FQSW9QcWhwWXZrNnd3NDRoCktZNnphclMyRC9pQWorMWlGZjFUVnB3bUJGSHY4MTBmVmlNQW1IVHpRd3ZZSldSbWNSeSs5cXZMWmh3OXIzZCsKMy9NZTh0QzdZV0NYQ3ZWNU5aRnlBVGR2aDFqSGxkUUVtQ0c0RDRSK1J1ZjZ1UWxjbXAreVN4MXY4K1p1QnkxaQpPU2RFVURDSmxBQ0JMNlRKc1BIMGl5THBLSXdOcWpDT29wcGdxdC96cXc2U3I1dWdWUnM5andkNlFvSXhxZ1B4Cnpwb1hpeU9yQWdNQkFBRUNnZ0VBV05lR3o4U0Fsb3BUU0w5a1JEdlNCUWIxZHFxcFlxNXhIS2tXWTRrajdrRXUKdkNMeXA5UUdXRW12OHVXNTY1UkhPMGxKbHN0bGE5OWJNVW1OWmI1ejk5bXdaYmoxcVRvK2RIcWoyMnZVLytIaQpFdmxRYVJKK1EydGQwQTV5SUhqWi95ODJzYU9HTk9nWGc5am9CdVlQQ2d6eUUwTHg0UFgrcnArQTdjdXA4eU9oCm1BV2NnbkRCQzE4OE9oUG5ydUIza0JNWUkxWmorU0FBNkVzRUoxV3RmamZjVmxsak11MlVqSVlWVCt1UlpyNGoKMi82TDVXSlBqdEZIQ0VjaWphcC8rVHBUY3pmMEdaNGhQb1hPSWZtNmFoblU3OVpJQWVxaUtET3RxUVNUcjJBcwp5VDM0WTdlZmI4TWFURmlhcVFhTjNEaGRUWENmaEkvK0JPVmVOY0RHN1FLQmdRREdLS3FrMGVGMnFHamJNMkw5CmdScU5HUEVWVUt5VnArckR0L1BraEFGS3QwdzExQWZFQkRIRkNEWTlmVmg5bUlCVlllaUl5MXM2bE82TGNVQUMKUElZOEF0MmJ3V3JXR1BYOWhCU29QRkIwVEYzWU1ISkxNc0drZEVDdE5ibE44dHNhTkxIbisrRWE5Wm1WalJzSApiM0FDcG1COWEvSWg0dnE3bG5Zc09SY1V6d0tCZ1FEendhVU9GRUhFamttZzRYd0luMmtWRVVkVHdHc281ekZ3CjN6NEVZOW9BZHZwNFk2THRRd3pleXNJL0NlWGZ6RXV3N3I5NkIvbTBsV3UxZGV3SkphTXh4RW9mZVdObytsWTIKNUtSYklOYVFRbmdZN2Q3KzBuazN4R1MrRDRBMTBsWTdHRDRiOTFiL2g0MWdTYlFIV0lLbU1RZzViZXZKMDIrawoxUjVCMllpeVpRS0JnRStsN09FTzAxY0VYaEV0V0c2WXcvbE91eWhjSXVLTWVkcHRTQVRqNGprTDcvLzYxNXc4CksxME03ZkJOUDVKTUI5bEozMU9NbVlDMGVDVm9RZGdrUjdnN1ZxUFNYSVR0eDRJODRxaTBoWW9aWCtjVG9mMEQKeTcyMFZJTEtnMDhIZkhYT0ZHd3dXOHlnUnpsTFhEL2kxTnpienhEYW9KcHFSMm03RW9pMzhjVVZBb0dCQU1tbgpORzMrVWg1U2ZCVHRGVmhvMEYwT2EweWREY25MNFhuNEpXMHFVZW82ZzZGZkJDVjJaOHBVUVBnM3J3VkRGSWN1CkxCZS9TMU9hblgyRUxaMnZsbCtRZktXbkhaZDJLaWJGWmpiQlp0LzNMVFdxYStXeHAzaDhMNytRUVVmRlYzTVIKN2lmaXFnVkJWYk1IcGpqQmYyd1BlamRRZVZVQlp3WWREU2Y2MTN5RkFvR0FXeEFtZVIvNDdpSHN1RHB2NUlKUApBWlljZjQ4RS8xeFdlQ3hFeEhuQWtMbzJ5S3Y0UjNOdmNKOEdTZFNUUzZuN24xQkNwRFJ1cVVsL1VMNXQ1RG1QCjZuZDZ3eVhqSlZYbG9kSWJQak1Jd0FhUktjTUlqcFNNTVVUeWRqK2JENk5pNnMzdThnMTNPQmt5T3FQTWNjbnEKVXliOC83dnQ3M0Q2UjkwSXNEWkFwMVU9Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K
+    VERIFYING_KEY: LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF2SzUrWmpWZTVMT1d3QWdTY25GdQpyK3hnT3MxM1BISm1NS3lEcVY2MjRQaFNjSGNlbXlHYXByVCtpbVg0MmZnTkNaK1pxWDFxWUhhWFE5cTlpQVBECmt6QU9aWmhOMVgvSW81SlkzL1JTcEVacVhvYnRuNkkzbjUxallGYXhxanlLRDZvYVdMNU9zTU9PSVNtT3MycTAKdGcvNGdJL3RZaFg5VTFhY0pnUlI3L05kSDFZakFKaDA4ME1MMkNWa1puRWN2dmFyeTJZY1BhOTNmdC96SHZMUQp1MkZnbHdyMWVUV1JjZ0UzYjRkWXg1WFVCSmdodUErRWZrYm4rcmtKWEpxZnNrc2RiL1BtYmdjdFlqa25SRkF3CmlaUUFnUytreWJEeDlJc2k2U2lNRGFvd2pxS2FZS3JmODZzT2txK2JvRlViUFk4SGVrS0NNYW9EOGM2YUY0c2oKcXdJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t
+  kind: Secret
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:/Secret:auth-service/auth-secrets
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Secret","metadata":{"annotations":{},"labels":{"app":"auth","app.kubernetes.io/component":"auth-service","environment":"dev"},"name":"auth-secrets","namespace":"auth-service"},"stringData":{"DJANGO_DEBUG":"False","DJANGO_SECRET_KEY":"django-insecure-change-me-in-prod","INTERNAL_API_KEY":"change-me","SERVICE_JWT":"change-me","SIGNING_KEY":"-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC8rn5mNV7ks5bA\nCBJycW6v7GA6zXc8cmYwrIOpXrbg+FJwdx6bIZqmtP6KZfjZ+A0Jn5mpfWpgdpdD\n2r2IA8OTMA5lmE3Vf8ijkljf9FKkRmpehu2fojefnWNgVrGqPIoPqhpYvk6ww44h\nKY6zarS2D/iAj+1iFf1TVpwmBFHv810fViMAmHTzQwvYJWRmcRy+9qvLZhw9r3d+\n3/Me8tC7YWCXCvV5NZFyATdvh1jHldQEmCG4D4R+Ruf6uQlcmp+ySx1v8+ZuBy1i\nOSdEUDCJlACBL6TJsPH0iyLpKIwNqjCOoppgqt/zqw6Sr5ugVRs9jwd6QoIxqgPx\nzpoXiyOrAgMBAAECggEAWNeGz8SAlopTSL9kRDvSBQb1dqqpYq5xHKkWY4kj7kEu\nvCLyp9QGWEmv8uW565RHO0lJlstla99bMUmNZb5z99mwZbj1qTo+dHqj22vU/+Hi\nEvlQaRJ+Q2td0A5yIHjZ/y82saOGNOgXg9joBuYPCgzyE0Lx4PX+rp+A7cup8yOh\nmAWcgnDBC188OhPnruB3kBMYI1Zj+SAA6EsEJ1WtfjfcVlljMu2UjIYVT+uRZr4j\n2/6L5WJPjtFHCEcijap/+TpTczf0GZ4hPoXOIfm6ahnU79ZIAeqiKDOtqQSTr2As\nyT34Y7efb8MaTFiaqQaN3DhdTXCfhI/+BOVeNcDG7QKBgQDGKKqk0eF2qGjbM2L9\ngRqNGPEVUKyVp+rDt/PkhAFKt0w11AfEBDHFCDY9fVh9mIBVYeiIy1s6lO6LcUAC\nPIY8At2bwWrWGPX9hBSoPFB0TF3YMHJLMsGkdECtNblN8tsaNLHn++Ea9ZmVjRsH\nb3ACpmB9a/Ih4vq7lnYsORcUzwKBgQDzwaUOFEHEjkmg4XwIn2kVEUdTwGso5zFw\n3z4EY9oAdvp4Y6LtQwzeysI/CeXfzEuw7r96B/m0lWu1dewJJaMxxEofeWNo+lY2\n5KRbINaQQngY7d7+0nk3xGS+D4A10lY7GD4b91b/h41gSbQHWIKmMQg5bevJ02+k\n1R5B2YiyZQKBgE+l7OEO01cEXhEtWG6Yw/lOuyhcIuKMedptSATj4jkL7//615w8\nK10M7fBNP5JMB9lJ31OMmYC0eCVoQdgkR7g7VqPSXITtx4I84qi0hYoZX+cTof0D\ny720VILKg08HfHXOFGwwW8ygRzlLXD/i1NzbzxDaoJpqR2m7Eoi38cUVAoGBAMmn\nNG3+Uh5SfBTtFVho0F0Oa0ydDcnL4Xn4JW0qUeo6g6FfBCV2Z8pUQPg3rwVDFIcu\nLBe/S1OanX2ELZ2vll+QfKWnHZd2KibFZjbBZt/3LTWqa+Wxp3h8L7+QQUfFV3MR\n7ifiqgVBVbMHpjjBf2wPejdQeVUBZwYdDSf613yFAoGAWxAmeR/47iHsuDpv5IJP\nAZYcf48E/1xWeCxExHnAkLo2yKv4R3NvcJ8GSdSTS6n7n1BCpDRuqUl/UL5t5DmP\n6nd6wyXjJVXlodIbPjMIwAaRKcMIjpSMMUTydj+bD6Ni6s3u8g13OBkyOqPMccnq\nUyb8/7vt73D6R90IsDZAp1U=\n-----END PRIVATE KEY-----\n","VERIFYING_KEY":"-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvK5+ZjVe5LOWwAgScnFu\nr+xgOs13PHJmMKyDqV624PhScHcemyGaprT+imX42fgNCZ+ZqX1qYHaXQ9q9iAPD\nkzAOZZhN1X/Io5JY3/RSpEZqXobtn6I3n51jYFaxqjyKD6oaWL5OsMOOISmOs2q0\ntg/4gI/tYhX9U1acJgRR7/NdH1YjAJh080ML2CVkZnEcvvary2YcPa93ft/zHvLQ\nu2Fglwr1eTWRcgE3b4dYx5XUBJghuA+Efkbn+rkJXJqfsksdb/PmbgctYjknRFAw\niZQAgS+kybDx9Isi6SiMDaowjqKaYKrf86sOkq+boFUbPY8HekKCMaoD8c6aF4sj\nqwIDAQAB\n-----END PUBLIC KEY-----"},"type":"Opaque"}
+    creationTimestamp: "2026-04-04T18:49:17Z"
+    labels:
+      app: auth
+      app.kubernetes.io/component: auth-service
+      environment: dev
+    name: auth-secrets
+    namespace: auth-service
+    resourceVersion: "2267268"
+    uid: c537cecb-6817-46b9-afdb-619146534ad5
+  type: Opaque
+- apiVersion: v1
+  data:
+    AUTH_KAFKA_CLIENT_ID: YXV0aC1zZXJ2aWNl
+    PAYMENT_KAFKA_CLIENT_ID: cGF5bWVudC1zZXJ2aWNl
+  kind: Secret
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:/Secret:auth-service/kafka-credentials
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Secret","metadata":{"annotations":{},"labels":{"app":"kafka","app.kubernetes.io/component":"message-broker","environment":"dev"},"name":"kafka-credentials","namespace":"auth-service"},"stringData":{"AUTH_KAFKA_CLIENT_ID":"auth-service","PAYMENT_KAFKA_CLIENT_ID":"payment-service"},"type":"Opaque"}
+    creationTimestamp: "2026-04-04T18:49:17Z"
+    labels:
+      app: kafka
+      app.kubernetes.io/component: message-broker
+      environment: dev
+    name: kafka-credentials
+    namespace: auth-service
+    resourceVersion: "2267269"
+    uid: 9d2842f8-c7de-4b3e-9af2-ff9a99c95bc9
+  type: Opaque
+- apiVersion: v1
+  data:
+    DB_NAME: YXV0aGRi
+    DB_PASSWORD: MjAyNU5ldys=
+    DB_USER: aXNoaW13ZQ==
+    POSTGRES_PASSWORD: MjAyNU5ldys=
+    POSTGRES_USER: aXNoaW13ZQ==
+  kind: Secret
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:/Secret:auth-service/postgres-credentials
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Secret","metadata":{"annotations":{},"labels":{"app":"postgres","environment":"dev"},"name":"postgres-credentials","namespace":"auth-service"},"stringData":{"DB_NAME":"authdb","DB_PASSWORD":"2025New+","DB_USER":"ishimwe","POSTGRES_PASSWORD":"2025New+","POSTGRES_USER":"ishimwe"},"type":"Opaque"}
+    creationTimestamp: "2026-04-04T18:49:17Z"
+    labels:
+      app: postgres
+      environment: dev
+    name: postgres-credentials
+    namespace: auth-service
+    resourceVersion: "2267271"
+    uid: 7845d241-90ff-47cb-999c-2c50b6546d0f
+  type: Opaque
+- apiVersion: v1
+  data:
+    AUTH_RABBITMQ_PASS: R0E0eGRyMksxaGJVZEpnQjFET0pYc1VPcTBXSzZrb1haeTNNOUFUeTdFYz0=
+    AUTH_RABBITMQ_USER: aXNoaW13ZQ==
+    PAYMENT_RABBITMQ_PASS: R0E0eGRyMksxaGJVZEpnQjFET0pYc1VPcTBXSzZrb1haeTNNOUFUeTdFYz0=
+    PAYMENT_RABBITMQ_USER: aXNoaW13ZQ==
+    RABBITMQ_DEFAULT_VHOST: bWljcm9zZXJ2aWNlX29uZQ==
+    RABBITMQ_ERLANG_COOKIE: c2VjdXJlLWNvb2tpZS1mb3ItY2x1c3Rlcg==
+    RABBITMQ_PASS: R0E0eGRyMksxaGJVZEpnQjFET0pYc1VPcTBXSzZrb1haeTNNOUFUeTdFYz0=
+    RABBITMQ_USER: aXNoaW13ZQ==
+  kind: Secret
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:/Secret:auth-service/rabbitmq-credentials
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Secret","metadata":{"annotations":{},"labels":{"app":"rabbitmq","app.kubernetes.io/component":"message-broker","environment":"dev"},"name":"rabbitmq-credentials","namespace":"auth-service"},"stringData":{"AUTH_RABBITMQ_PASS":"GA4xdr2K1hbUdJgB1DOJXsUOq0WK6koXZy3M9ATy7Ec=","AUTH_RABBITMQ_USER":"ishimwe","PAYMENT_RABBITMQ_PASS":"GA4xdr2K1hbUdJgB1DOJXsUOq0WK6koXZy3M9ATy7Ec=","PAYMENT_RABBITMQ_USER":"ishimwe","RABBITMQ_DEFAULT_VHOST":"microservice_one","RABBITMQ_ERLANG_COOKIE":"secure-cookie-for-cluster","RABBITMQ_PASS":"GA4xdr2K1hbUdJgB1DOJXsUOq0WK6koXZy3M9ATy7Ec=","RABBITMQ_USER":"ishimwe"},"type":"Opaque"}
+    creationTimestamp: "2026-04-04T18:49:17Z"
+    labels:
+      app: rabbitmq
+      app.kubernetes.io/component: message-broker
+      environment: dev
+    name: rabbitmq-credentials
+    namespace: auth-service
+    resourceVersion: "2267272"
+    uid: 5a64d1c7-0b00-4a67-876b-e28ee2f3a38a
+  type: Opaque
+- apiVersion: v1
+  data:
+    REDIS_PASSWORD: ZGV2LXJlZGlzLXBhc3N3b3Jk
+  kind: Secret
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:/Secret:auth-service/redis-credentials
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Secret","metadata":{"annotations":{},"labels":{"app":"redis","app.kubernetes.io/component":"cache","environment":"dev"},"name":"redis-credentials","namespace":"auth-service"},"stringData":{"REDIS_PASSWORD":"dev-redis-password"},"type":"Opaque"}
+    creationTimestamp: "2026-04-04T18:49:17Z"
+    labels:
+      app: redis
+      app.kubernetes.io/component: cache
+      environment: dev
+    name: redis-credentials
+    namespace: auth-service
+    resourceVersion: "2267273"
+    uid: 05a67290-e9f1-4908-bbc7-3668faa072a8
+  type: Opaque
+- apiVersion: v1
+  data:
+    AUTH_PUBLIC_KEY_URL: http://auth-service.auth-service.svc.cluster.local:8000/zedvye_one/users/public_key/
+    CHANNEL_LAYER_HOSTS: redis.infrastructure.svc.cluster.local:6379
+    CORS_ALLOW_CREDENTIALS: "True"
+    CORS_ALLOWED_ORIGINS: http://localhost:3000,http://172.18.0.100,http://127.0.0.1:3000
+    CSRF_TRUSTED_ORIGINS: http://localhost:3000,http://172.18.0.100,http://127.0.0.1:3000
+    DB_HOST: postgres.infrastructure.svc.cluster.local
+    DB_NAME: authdb
+    DB_PORT: "5432"
+    DJANGO_ALLOWED_HOSTS: auth-service,auth-service.auth-service.svc.cluster.local,localhost,127.0.0.1,auth.local,172.18.0.100
+    DJANGO_DEBUG: "True"
+    DJANGO_SETTINGS_MODULE: my_backend.settings
+    KAFKA_BROKERS: kafka-cluster-kafka-bootstrap.kafka-operator.svc.cluster.local:9092
+    KAFKA_GROUP_ID: auth_consumer_group
+    KAFKA_TOPIC: microservice_one.events
+    LOG_LEVEL: DEBUG
+    POSTGRES_HOST: postgres.infrastructure.svc.cluster.local
+    POSTGRES_PORT: "5432"
+    RABBITMQ_HOST: rabbitmq.infrastructure.svc.cluster.local
+    RABBITMQ_QUEUE: auth.events
+    RABBITMQ_VHOST: auth_service
+    REDIS_HOST: redis.infrastructure.svc.cluster.local
+    SERVICE_NAME: auth
+  kind: ConfigMap
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:/ConfigMap:auth-service/auth-config
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"AUTH_PUBLIC_KEY_URL":"http://auth-service.auth-service.svc.cluster.local:8000/zedvye_one/users/public_key/","CHANNEL_LAYER_HOSTS":"redis.infrastructure.svc.cluster.local:6379","CORS_ALLOWED_ORIGINS":"http://localhost:3000,http://172.18.0.100,http://127.0.0.1:3000","CORS_ALLOW_CREDENTIALS":"True","CSRF_TRUSTED_ORIGINS":"http://localhost:3000,http://172.18.0.100,http://127.0.0.1:3000","DB_HOST":"postgres.infrastructure.svc.cluster.local","DB_NAME":"authdb","DB_PORT":"5432","DJANGO_ALLOWED_HOSTS":"auth-service,auth-service.auth-service.svc.cluster.local,localhost,127.0.0.1,auth.local,172.18.0.100","DJANGO_DEBUG":"True","DJANGO_SETTINGS_MODULE":"my_backend.settings","KAFKA_BROKERS":"kafka-cluster-kafka-bootstrap.kafka-operator.svc.cluster.local:9092","KAFKA_GROUP_ID":"auth_consumer_group","KAFKA_TOPIC":"microservice_one.events","LOG_LEVEL":"DEBUG","POSTGRES_HOST":"postgres.infrastructure.svc.cluster.local","POSTGRES_PORT":"5432","RABBITMQ_HOST":"rabbitmq.infrastructure.svc.cluster.local","RABBITMQ_QUEUE":"auth.events","RABBITMQ_VHOST":"auth_service","REDIS_HOST":"redis.infrastructure.svc.cluster.local","SERVICE_NAME":"auth"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"environment":"dev"},"name":"auth-config","namespace":"auth-service"}}
+    creationTimestamp: "2026-04-04T18:55:43Z"
+    labels:
+      environment: dev
+    name: auth-config
+    namespace: auth-service
+    resourceVersion: "2267267"
+    uid: 61d003f1-30af-44f0-afbe-dd908d0f0b86
+- apiVersion: v1
+  data:
+    ca.crt: |
+      -----BEGIN CERTIFICATE-----
+      MIIDBTCCAe2gAwIBAgIITfRDV4mY0c8wDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNjAyMTkxMzE2NThaFw0zNjAyMTcxMzIxNThaMBUx
+      EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      AoIBAQC5OYaTlC9qby3AVP35+RuT3Yg9+cHVcl6YQWbvsPHbFPL2lX1i5fg150KX
+      RWD1rfzrL5CGz3q2mXWIVLs/A7qN7Qj1y3NV1LECWLmhDy0USp13+BgEoWp3DbQ5
+      OK7JTAye3pzU6taYvCwiXszeX2C6pj+YKZIt5e1hqFB8OB9t41wXNLodw37wvdni
+      HZV8nImN6G+EzBPq6GvqnvuCnAi22ruTRPRn9tr4eM3upxfu4RcniSWu+yhNfxOJ
+      sI4VaNMOsA92u0CiWkiQMaMDjovsiiwdJh7hkw3nnSnEGsFSxP2wwpZP2csApUrm
+      NrOsTey/JYUOVKCrkGidw/xJ+/YhAgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQbpVwgI65J0CF5M3tySLsq+QE3ljAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQA93MeMmOL+
+      euRNwbIK3sdc5yLdQjZ5ZXGBwJzMh4QWcUihPdUbFv3A+bQ6CQS4uWCrcNrHQPli
+      LuvPlvUPJM4SPFa673ig02ZKheDd9a+9g03UcUGLNctNEtFfTP+x81hJ+4djz8m8
+      KwQ/QeLPBDy827Hb4U3sjlfdRtTEg2A09KktcOnzsQa/EijXhZLCu9WAt8nxn6qk
+      4omGhBGLrfqC1Qi+73GjGQCMmZ48XcQP7ENIVE8D3lipLeZTiC4gmqXzCCjz4Bg7
+      7YSsiytVi7WBGsTWP8VzSDyiNHZ1Teul8lfL4FhZZs2z7iib6xvz+TOIwrDB8fu7
+      TjnofNo6RkaP
+      -----END CERTIFICATE-----
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubernetes.io/description: Contains a CA bundle that can be used to verify the
+        kube-apiserver when using internal endpoints such as the internal service
+        IP or kubernetes.default.svc. No other usage is guaranteed across distributions
+        of Kubernetes clusters.
+    creationTimestamp: "2026-04-04T18:55:42Z"
+    name: kube-root-ca.crt
+    namespace: auth-service
+    resourceVersion: "1754506"
+    uid: 8ce4196f-932f-418e-933f-9bef2ab498c7
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:/PersistentVolumeClaim:auth-service/auth-service-media-pvc
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"PersistentVolumeClaim","metadata":{"annotations":{},"labels":{"environment":"dev"},"name":"auth-service-media-pvc","namespace":"auth-service"},"spec":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"10Gi"}}}}
+      pv.kubernetes.io/bind-completed: "yes"
+      pv.kubernetes.io/bound-by-controller: "yes"
+      volume.beta.kubernetes.io/storage-provisioner: rancher.io/local-path
+      volume.kubernetes.io/selected-node: payment-service-control-plane
+      volume.kubernetes.io/storage-provisioner: rancher.io/local-path
+    creationTimestamp: "2026-02-25T15:46:59Z"
+    finalizers:
+    - kubernetes.io/pvc-protection
+    labels:
+      environment: dev
+    name: auth-service-media-pvc
+    namespace: auth-service
+    resourceVersion: "2267275"
+    uid: 3dff5f1f-b2c4-470b-a0df-850af2219fe1
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 10Gi
+    storageClassName: standard
+    volumeMode: Filesystem
+    volumeName: pvc-3dff5f1f-b2c4-470b-a0df-850af2219fe1
+  status:
+    accessModes:
+    - ReadWriteOnce
+    capacity:
+      storage: 10Gi
+    phase: Bound
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:/PersistentVolumeClaim:auth-service/auth-service-static-pvc
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"PersistentVolumeClaim","metadata":{"annotations":{},"labels":{"environment":"dev"},"name":"auth-service-static-pvc","namespace":"auth-service"},"spec":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"5Gi"}}}}
+      pv.kubernetes.io/bind-completed: "yes"
+      pv.kubernetes.io/bound-by-controller: "yes"
+      volume.beta.kubernetes.io/storage-provisioner: rancher.io/local-path
+      volume.kubernetes.io/selected-node: payment-service-control-plane
+      volume.kubernetes.io/storage-provisioner: rancher.io/local-path
+    creationTimestamp: "2026-02-25T15:46:59Z"
+    finalizers:
+    - kubernetes.io/pvc-protection
+    labels:
+      environment: dev
+    name: auth-service-static-pvc
+    namespace: auth-service
+    resourceVersion: "2267277"
+    uid: b82b9b30-f0ec-422d-a95f-bbf0417c7c55
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 5Gi
+    storageClassName: standard
+    volumeMode: Filesystem
+    volumeName: pvc-b82b9b30-f0ec-422d-a95f-bbf0417c7c55
+  status:
+    accessModes:
+    - ReadWriteOnce
+    capacity:
+      storage: 5Gi
+    phase: Bound
+- apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: auth-service:networking.k8s.io/Ingress:auth-service/auth-ingress
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"kubernetes.io/ingress.class":"traefik","traefik.ingress.kubernetes.io/router.entrypoints":"web","traefik.ingress.kubernetes.io/service.headers":"customrequestheaders:\n  Host: auth-service.auth-service.svc.cluster.local\n"},"labels":{"environment":"dev"},"name":"auth-ingress","namespace":"auth-service"},"spec":{"rules":[{"host":"auth.local","http":{"paths":[{"backend":{"service":{"name":"auth-service","port":{"number":8000}}},"path":"/","pathType":"Prefix"}]}}]}}
+      kubernetes.io/ingress.class: traefik
+      traefik.ingress.kubernetes.io/router.entrypoints: web
+      traefik.ingress.kubernetes.io/service.headers: |
+        customrequestheaders:
+          Host: auth-service.auth-service.svc.cluster.local
+    creationTimestamp: "2026-04-03T19:13:55Z"
+    generation: 1
+    labels:
+      environment: dev
+    name: auth-ingress
+    namespace: auth-service
+    resourceVersion: "2267285"
+    uid: 0c2c5151-9dba-41fa-9f61-edc560603e8c
+  spec:
+    rules:
+    - host: auth.local
+      http:
+        paths:
+        - backend:
+            service:
+              name: auth-service
+              port:
+                number: 8000
+          path: /
+          pathType: Prefix
+  status:
+    loadBalancer: {}
+kind: List
+metadata:
+  resourceVersion: ""

@@ -1,0 +1,23 @@
+{{- if .Values.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: auth-service-static-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.persistence.static.size }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: auth-service-media-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.persistence.media.size }}
+{{- end }}

@@ -1,0 +1,125 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-api
+  labels:
+    app: auth-service
+    component: api
+    managed-by: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.deployments.api.replicas }}
+  selector:
+    matchLabels:
+      app: auth-service
+      component: api
+  template:
+    metadata:
+      labels:
+        app: auth-service
+        component: api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      containers:
+      - name: auth-api
+        image: {{ .Values.backend.auth.image.repository }}:{{ .Values.backend.auth.image.tag }}
+        imagePullPolicy: {{ .Values.backend.auth.image.pullPolicy }}
+        ports:
+        - containerPort: 8000
+          name: http
+        - containerPort: 8001
+          name: metrics
+        envFrom:
+        - configMapRef:
+            name: {{ .Values.configMap.name }}
+        - secretRef:
+            name: {{ .Values.secrets.auth }}
+        - secretRef:
+            name: {{ .Values.secrets.postgres }}
+        - secretRef:
+            name: {{ .Values.secrets.rabbitmq }}
+        - secretRef:
+            name: {{ .Values.secrets.kafka }}
+        - secretRef:
+            name: {{ .Values.secrets.redis }}
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: DJANGO_SETTINGS_MODULE
+          value: "my_backend.settings"
+        resources:
+          requests:
+            memory: {{ .Values.deployments.api.resources.requests.memory }}
+            cpu: {{ .Values.deployments.api.resources.requests.cpu }}
+          limits:
+            memory: {{ .Values.deployments.api.resources.limits.memory }}
+            cpu: {{ .Values.deployments.api.resources.limits.cpu }}
+        livenessProbe:
+          httpGet:
+            path: /health/
+            port: http
+            httpHeaders:
+            - name: Host
+              value: auth-service
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health/
+            port: http
+            httpHeaders:
+            - name: Host
+              value: auth-service
+          initialDelaySeconds: 20
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+        startupProbe:
+          httpGet:
+            path: /health/
+            port: http
+            httpHeaders:
+            - name: Host
+              value: auth-service
+          failureThreshold: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        volumeMounts:
+        - name: static-files
+          mountPath: /app/static
+        - name: media-files
+          mountPath: /app/media
+        - name: keys
+          mountPath: /app/keys
+          readOnly: true
+      volumes:
+      - name: static-files
+        persistentVolumeClaim:
+          claimName: auth-service-static-pvc
+      - name: media-files
+        persistentVolumeClaim:
+          claimName: auth-service-media-pvc
+      - name: tmp
+        emptyDir: {}
+      - name: keys
+        secret:
+          secretName: {{ .Values.secrets.auth }}
+          items:
+          - key: SIGNING_KEY
+            path: private.pem
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000

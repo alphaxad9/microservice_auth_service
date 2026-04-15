@@ -3,3 +3,17 @@ helm upgrade my-backend . \
   --install \
   --wait \
   --timeout 10m
+
+
+
+
+# 1. Validate templates
+helm template auth-service . --namespace auth-service --debug
+
+# 2. Dry run install
+helm install auth-service . --namespace auth-service --dry-run --debug
+
+# 3. If everything looks good, commit!
+git add .
+git commit -m "feat: complete auth-service Helm chart migration from Kustomize"
+git push
