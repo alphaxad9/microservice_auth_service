@@ -15,7 +15,7 @@ urlpatterns = [
 
 
     path('users/<uuid:user_id>/', UserByIdView.as_view(), name='user_by_id'),
-    path('users/', UserListView.as_view(), name='user_list'),
+    path('users/list/', UserListView.as_view(), name='user_list'),
     
     # New user update routes
     path('change-password/', ChangePasswordView.as_view(), name='change_password'),

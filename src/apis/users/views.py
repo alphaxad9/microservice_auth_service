@@ -65,7 +65,59 @@ class PublicKeyView(APIView):
         public_key_pem = settings.SIMPLE_JWT['VERIFYING_KEY']
         return HttpResponse(public_key_pem, content_type='text/plain')
 
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class UserCreationView(APIView):
+    permission_classes = [AllowAny]
 
+    def post(self, request: Request):
+        serializer = UserCreationSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+                user = serializer.save()
+
+                try:
+                    user_use_case = create_user_use_case()
+                    user_dto = user_use_case.publish_user_created_event(user.id)
+                    logger.info(f"User creation event published for user: {user.id}")
+                except Exception as e:
+                    logger.error(f"Failed to publish user creation event: {str(e)}")
+                    
+                refresh = RefreshToken.for_user(user)
+                access = str(refresh.access_token)
+                
+                # ✅ STEP 9: Build FULL absolute URL for profile picture
+                profile_picture_url = None
+                if user.profile_picture:
+                    profile_picture_url = request.build_absolute_uri(
+                        user.profile_picture.url
+                    )
+                
+                user_data = {
+                    'id': str(user.id),
+                    'email': user.email,
+                    'username': user.username,
+                    'first_name': user.first_name or '',
+                    'last_name': user.last_name or '',
+                    'profile_picture': profile_picture_url  # ✅ Now returns http://... URL
+                }
+
+                response_data = {
+                    'message': 'User created and logged in successfully',
+                    'user': user_data,
+                    'access': access,
+                    'refresh': str(refresh)
+                }
+
+                response = Response(response_data, status=status.HTTP_201_CREATED)
+                
+                # Use helper function for consistent cookie setting
+                set_auth_cookies(response, access, str(refresh))
+                
+                return response
+            except Exception as e:
+                logger.error(f"Error creating user: {str(e)}")
+                return Response({'errors': {'non_field_errors': [str(e)]}}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
@@ -128,52 +180,6 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             ip = request.META.get('REMOTE_ADDR')
         return ip or 'unknown'
 
-
-@method_decorator(ensure_csrf_cookie, name='dispatch')
-class UserCreationView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request: Request):
-        serializer = UserCreationSerializer(data=request.data)
-        if serializer.is_valid():
-            try:
-                user = serializer.save()
-
-                try:
-                    user_use_case = create_user_use_case()
-                    user_dto = user_use_case.publish_user_created_event(user.id)
-                    logger.info(f"User creation event published for user: {user.id}")
-                except Exception as e:
-                    logger.error(f"Failed to publish user creation event: {str(e)}")
-                    
-                refresh = RefreshToken.for_user(user)
-                access = str(refresh.access_token)
-                user_data = {
-                    'id': str(user.id),
-                    'email': user.email,
-                    'username': user.username,
-                    'first_name': user.first_name or '',
-                    'last_name': user.last_name or '',
-                    'profile_picture': user.profile_picture or ''
-                }
-
-                response_data = {
-                    'message': 'User created and logged in successfully',
-                    'user': user_data,
-                    'access': access,
-                    'refresh': str(refresh)
-                }
-
-                response = Response(response_data, status=status.HTTP_201_CREATED)
-                
-                # Use helper function for consistent cookie setting
-                set_auth_cookies(response, access, str(refresh))
-                
-                return response
-            except Exception as e:
-                logger.error(f"Error creating user: {str(e)}")
-                return Response({'errors': {'non_field_errors': [str(e)]}}, status=status.HTTP_400_BAD_REQUEST)
-        return Response({'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
@@ -320,9 +326,6 @@ class CustomTokenRefreshView(TokenRefreshView):
             return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class UserByIdView(APIView):
-    # Change this line:
-    # permission_classes = [IsAuthenticated]
-    # To this:
     permission_classes = [IsInternalService]  # Only internal services can access
 
     def get(self, request: Request, user_id: UUID):
@@ -336,17 +339,23 @@ class UserByIdView(APIView):
             if not user_dto:
                 return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
            
-            return Response({'user': user_dto.to_dict()}, status=status.HTTP_200_OK)
+            # ✅ Transform profile_picture to absolute URL for internal service consumers
+            user_data = user_dto.to_dict()
+            
+            profile_picture = user_data.get('profile_picture')
+            if profile_picture:  # Only transform if truthy (not None, not empty string)
+                # Handle both relative paths (/media/...) and already-absolute URLs
+                if profile_picture.startswith('/'):
+                    user_data['profile_picture'] = request.build_absolute_uri(profile_picture)
+                # else: already absolute, leave as-is
+           
+            return Response({'user': user_data}, status=status.HTTP_200_OK)
            
         except ValueError:
             return Response({'error': 'Invalid user ID format'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.error(f"Error getting user by ID: {str(e)}")
             return Response({'error': 'Failed to retrieve user'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-
-
 
 
 
@@ -432,7 +441,15 @@ class UserListView(APIView):
                 include_deleted=include_deleted
             )
             
-            users_data = [user.to_dict() for user in users]
+            # ✅ Transform profile_picture to absolute URL for each user
+            users_data = []
+            for user in users:
+                user_dict = user.to_dict()
+                profile_picture = user_dict.get('profile_picture')
+                if profile_picture and isinstance(profile_picture, str) and profile_picture.startswith('/'):
+                    user_dict['profile_picture'] = request.build_absolute_uri(profile_picture)
+                users_data.append(user_dict)
+            
             return Response({
                 'users': users_data,
                 'pagination': {
@@ -447,7 +464,6 @@ class UserListView(APIView):
         except Exception as e:
             logger.error(f"Error listing users: {str(e)}")
             return Response({'error': 'Failed to list users'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 
 
