@@ -49,7 +49,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return data
 
 
+
 class UserProfileSerializer(serializers.ModelSerializer):
+    # ✅ Use SerializerMethodField to control output format
+    profile_picture = serializers.SerializerMethodField()
+
     class Meta:
         model = ORMUser
         fields = ('id', 'email', 'username', 'first_name', 'last_name', 'profile_picture')
@@ -57,12 +61,31 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'id': {'read_only': True},
             'email': {'read_only': True},
             'username': {'read_only': True},
-            # ⚠️ Do NOT validate profile_picture as URL
         }
 
-    # ✅ REMOVE URL VALIDATION — it's a file upload
-    # def validate_profile_picture(self, value):
-    #     ...  # ← DELETE THIS METHOD
+    def get_profile_picture(self, obj):
+        """
+        Return absolute URL for profile picture.
+        Uses request context if available, otherwise falls back to settings.
+        """
+        if not obj.profile_picture or not hasattr(obj.profile_picture, 'url'):
+            return None
+        
+        # Try to get request from context (preferred method)
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.profile_picture.url)
+        
+        # Fallback: manually construct URL from settings
+        # Ensure MEDIA_URL is properly configured in settings.py
+        media_url = getattr(settings, 'MEDIA_URL', '/media/')
+        base_url = getattr(settings, 'FRONTEND_URL', getattr(settings, 'ALLOWED_HOSTS', [''])[0] if settings.ALLOWED_HOSTS else '')
+        
+        # Handle cases where base_url doesn't include protocol
+        if base_url and not base_url.startswith(('http://', 'https://')):
+            base_url = f"http://{base_url}"
+            
+        return f"{base_url.rstrip('/')}{media_url.lstrip('/')}{str(obj.profile_picture).replace(media_url, '', 1)}" if base_url else None
 
     def update(self, instance, validated_data):
         # Only update non-file fields here
@@ -76,8 +99,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
-
-
 class UserCreationSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(write_only=True)
 

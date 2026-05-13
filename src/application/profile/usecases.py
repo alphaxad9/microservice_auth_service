@@ -99,6 +99,43 @@ class ProfileUseCase:
             logger.error("Unexpected error during profile creation for user %s: %s", user_id, e, exc_info=True)
             raise ProfileDomainError("Failed to create profile.") from e
     
+    def get_by_user_id(self, user_id: UUID, requester_id: UUID) -> MyUserProfileDTO | ForeignUserProfileDTO:
+        """
+        Retrieve a profile by user_id.
+        Returns MyUserProfileDTO if requester == user_id, else ForeignUserProfileDTO.
+        If profile doesn't exist, creates it idempotently.
+        """
+        try:
+            profile = self._profile_query_service.get_by_user_id(user_id)
+            domain_user = self._user_query_service.get_by_id(user_id, include_deleted=False)
+            user_dto = ProfileUserDTO.from_domain(domain_user)
+
+            if requester_id == user_id:
+                return MyUserProfileDTO.from_domain(profile, user_dto)
+            else:
+                # Optional: enforce account_type privacy later
+                return ForeignUserProfileDTO.from_domain(profile, user_dto)
+
+        except ProfileNotFoundError:
+            # Profile doesn't exist, create it idempotently then return
+            logger.debug("Profile not found for user %s; creating profile", user_id)
+            # Create profile idempotently (returns MyUserProfileDTO but we ignore for proper type handling)
+            self.create_profile(user_id)
+            # Fetch the now-existing profile and return appropriate DTO
+            profile = self._profile_query_service.get_by_user_id(user_id)
+            domain_user = self._user_query_service.get_by_id(user_id, include_deleted=False)
+            user_dto = ProfileUserDTO.from_domain(domain_user)
+
+            if requester_id == user_id:
+                return MyUserProfileDTO.from_domain(profile, user_dto)
+            else:
+                return ForeignUserProfileDTO.from_domain(profile, user_dto)
+
+        except UserNotFoundError:
+            raise
+        except Exception as e:
+            logger.error("Unexpected error in get_by_user_id for user %s: %s", user_id, e, exc_info=True)
+            raise ProfileDomainError("Failed to retrieve profile.") from e
     def update_profile(
         self,
         user_id: UUID,
@@ -491,28 +528,6 @@ class ProfileUseCase:
         except Exception as e:
             logger.error("Unexpected error in mark_online for user %s: %s", user_id, e, exc_info=True)
             raise ProfileDomainError("Failed to mark user as online.") from e
-
-    def get_by_user_id(self, user_id: UUID, requester_id: UUID) -> MyUserProfileDTO | ForeignUserProfileDTO:
-        """
-        Retrieve a profile by user_id.
-        Returns MyUserProfileDTO if requester == user_id, else ForeignUserProfileDTO.
-        """
-        try:
-            profile = self._profile_query_service.get_by_user_id(user_id)
-            domain_user = self._user_query_service.get_by_id(user_id, include_deleted=False)
-            user_dto = ProfileUserDTO.from_domain(domain_user)
-
-            if requester_id == user_id:
-                return MyUserProfileDTO.from_domain(profile, user_dto)
-            else:
-                # Optional: enforce account_type privacy later
-                return ForeignUserProfileDTO.from_domain(profile, user_dto)
-
-        except (ProfileNotFoundError, UserNotFoundError):
-            raise
-        except Exception as e:
-            logger.error("Unexpected error in get_by_user_id for user %s: %s", user_id, e, exc_info=True)
-            raise ProfileDomainError("Failed to retrieve profile.") from e
 
     def exists_for_user(self, user_id: UUID) -> bool:
         """Check if a profile exists for the given user."""

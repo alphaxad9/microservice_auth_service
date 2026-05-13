@@ -1,6 +1,7 @@
 # src/infrastructure/apps/users/urls.py
 from django.urls import path
-from .views import CsrfTokenView, CustomTokenObtainPairView, UserCreationView, UserProfileView, UserLogoutView, CustomTokenRefreshView, UserDeletionView,UserUpdateProfileView,  UserSoftDeleteView, UserByIdView,UserListView,  ChangeEmailView, ChangeUsernameView, ChangePasswordView, PublicKeyView
+from .views import CsrfTokenView, CustomTokenObtainPairView, UserCreationView, UserProfileView, UserLogoutView, CustomTokenRefreshView, UserDeletionView,UserUpdateProfileView,  UserSoftDeleteView, UserByIdView,UserListView,  ChangeEmailView, ChangeUsernameView, ChangePasswordView, PublicKeyView, InternalUserListView
+
 
 urlpatterns = [
     path('csrf/', CsrfTokenView.as_view(), name='csrf_token'),
@@ -13,9 +14,9 @@ urlpatterns = [
 
     path('profile/update/', UserUpdateProfileView.as_view(), name='update_profile'),
 
-
     path('users/<uuid:user_id>/', UserByIdView.as_view(), name='user_by_id'),
     path('users/list/', UserListView.as_view(), name='user_list'),
+    path('users/internal/list/', InternalUserListView.as_view(), name='internal_user_list'),  # ✅ Internal only
     
     # New user update routes
     path('change-password/', ChangePasswordView.as_view(), name='change_password'),

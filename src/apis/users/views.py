@@ -33,8 +33,8 @@ def set_auth_cookies(response, access_token, refresh_token):
         key='access',
         value=access_token,
         httponly=True,
-        secure=False,  # Required for SameSite=None
-        samesite='Lax',  # Required for cross-origin
+        secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],  # Required for SameSite=None
+        samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],  # Required for cross-origin
         max_age=timedelta(minutes=5).total_seconds(),
         path='/'
     )
@@ -43,8 +43,8 @@ def set_auth_cookies(response, access_token, refresh_token):
         key='refresh',
         value=refresh_token,
         httponly=True,
-        secure=False,  # Required for SameSite=None
-        samesite='Lax',  # Required for cross-origin
+        secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],  # Required for SameSite=None
+        samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],  # Required for cross-origin
         max_age=timedelta(days=1).total_seconds(),
         path='/'
     )
@@ -118,21 +118,98 @@ class UserCreationView(APIView):
                 logger.error(f"Error creating user: {str(e)}")
                 return Response({'errors': {'non_field_errors': [str(e)]}}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    
+
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class UserUpdateProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request: Request):
+        logger.info(f"🔍 PATCH /profile/ hit by user: {request.user}")  # DEBUG
+        logger.info(f"🔍 Request FILES: {request.FILES.keys()}")        # DEBUG
+        logger.info(f"🔍 Request DATA keys: {request.data.keys()}")     # DEBUG
+        
+        try:
+            user = request.user
+            first_name = request.data.get("first_name")
+            last_name = request.data.get("last_name")
+            profile_picture = request.FILES.get("profile_picture")
+
+            if first_name:
+                user.first_name = first_name.strip()
+            if last_name:
+                user.last_name = last_name.strip()
+            if profile_picture:
+                user.profile_picture = profile_picture
+                logger.info(f"🔍 File saved: {user.profile_picture.name}")  # DEBUG
+
+            fields_to_update = []
+            if first_name: fields_to_update.append("first_name")
+            if last_name: fields_to_update.append("last_name")
+            if profile_picture: fields_to_update.append("profile_picture")
+            
+            if fields_to_update:
+                user.save(update_fields=fields_to_update)
+
+            # ✅ ABSOLUTE URL LOGIC - with debug
+            profile_picture_url = None
+            if user.profile_picture and hasattr(user.profile_picture, 'url'):
+                relative_url = user.profile_picture.url
+                absolute_url = request.build_absolute_uri(relative_url)
+                logger.info(f"🔍 Relative: {relative_url}")   # DEBUG
+                logger.info(f"🔍 Absolute: {absolute_url}")   # DEBUG
+                profile_picture_url = absolute_url
+            else:
+                logger.info(f"🔍 No profile picture or invalid field")  # DEBUG
+
+            response_data = {
+                "message": "Profile updated successfully",  # ✅ Explicit message
+                "user": {
+                    "id": str(user.id),
+                    "email": user.email,
+                    "username": user.username,
+                    "first_name": user.first_name or "",
+                    "last_name": user.last_name or "",
+                    "profile_picture": profile_picture_url  # ✅ Should be http://...
+                }
+            }
+            logger.info(f"🔍 Sending response: {response_data['user']['profile_picture']}")  # DEBUG
+            return Response(response_data, status=200)
+
+        except Exception as e:
+            logger.error(f"❌ Error updating profile: {str(e)}", exc_info=True)
+            return Response({"error": "Failed to update profile", "details": str(e)}, status=500)
+
+
+
+
+
+
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request: Request):
-        serializer = UserProfileSerializer(request.user)
+        # ✅ Pass request in context so serializer can build absolute URLs
+        serializer = UserProfileSerializer(request.user, context={'request': request})
         return Response({'user': serializer.data}, status=status.HTTP_200_OK)
 
     def patch(self, request: Request):
-        serializer = UserProfileSerializer(request.user, data=request.data, partial=True)
+        # ✅ Pass request in context + handle multipart form data for file uploads
+        serializer = UserProfileSerializer(
+            request.user, 
+            data=request.data, 
+            partial=True, 
+            context={'request': request}
+        )
         if serializer.is_valid():
             user = serializer.save()
-            return Response({'user': UserProfileSerializer(user).data}, status=status.HTTP_200_OK)
+            # ✅ Re-serialize with context to ensure absolute URLs in response
+            return Response(
+                {'user': UserProfileSerializer(user, context={'request': request}).data}, 
+                status=status.HTTP_200_OK
+            )
         return Response({'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -233,44 +310,6 @@ class UserLogoutView(APIView):
         return ip or 'unknown'
 
 
-@method_decorator(ensure_csrf_cookie, name='dispatch')
-class UserUpdateProfileView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def patch(self, request: Request):
-        try:
-            user = request.user
-
-            first_name = request.data.get("first_name")
-            last_name = request.data.get("last_name")
-            profile_picture = request.FILES.get("profile_picture")
-
-            if first_name:
-                user.first_name = first_name
-
-            if last_name:
-                user.last_name = last_name
-
-            if profile_picture:
-                user.profile_picture = profile_picture
-
-            user.save()
-
-            return Response({
-                "message": "Profile updated successfully",
-                "user": {
-                    "id": str(user.id),
-                    "email": user.email,
-                    "username": user.username,
-                    "first_name": user.first_name,
-                    "last_name": user.last_name,
-                    "profile_picture": user.profile_picture.url if user.profile_picture else None
-                }
-            }, status=200)
-
-        except Exception as e:
-            logger.error(f"Error updating user profile: {str(e)}")
-            return Response({"error": "Failed to update profile"}, status=500)
 
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
@@ -300,8 +339,8 @@ class CustomTokenRefreshView(TokenRefreshView):
                 key='access',
                 value=data['access'],
                 httponly=True,
-                secure=False,
-                samesite='Lax',
+                secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+                samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
                 max_age=timedelta(minutes=5).total_seconds(),
                 path='/'
             )
@@ -311,8 +350,8 @@ class CustomTokenRefreshView(TokenRefreshView):
                     key='refresh',
                     value=data['refresh'],
                     httponly=True,
-                    secure=False,
-                    samesite='Lax',
+                    secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+                    samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
                     max_age=timedelta(days=1).total_seconds(),
                     path='/'
                 )
@@ -358,7 +397,54 @@ class UserByIdView(APIView):
             return Response({'error': 'Failed to retrieve user'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class InternalUserListView(APIView):
+    permission_classes = [IsInternalService]  # Only internal services can access
 
+    def get(self, request: Request):
+        """
+        List all users with pagination — INTERNAL USE ONLY
+        Query parameters: ?limit=100&offset=0&include_deleted=false
+        """
+        try:
+            # Get query parameters with defaults
+            limit = int(request.GET.get('limit', 100))
+            offset = int(request.GET.get('offset', 0))
+            include_deleted = request.GET.get('include_deleted', 'false').lower() == 'true'
+            
+            user_use_case = create_user_use_case()
+            users = user_use_case.list_all_users(
+                limit=limit,
+                offset=offset,
+                include_deleted=include_deleted
+            )
+            
+            # ✅ Transform profile_picture to absolute URL for each user
+            users_data = []
+            for user in users:
+                user_dict = user.to_dict()
+                profile_picture = user_dict.get('profile_picture')
+                if profile_picture:  # Only transform if truthy (not None, not empty string)
+                    # Handle both relative paths (/media/...) and already-absolute URLs
+                    if isinstance(profile_picture, str) and profile_picture.startswith('/'):
+                        user_dict['profile_picture'] = request.build_absolute_uri(profile_picture)
+                    # else: already absolute, leave as-is
+                users_data.append(user_dict)
+            
+            return Response({
+                'users': users_data,
+                'pagination': {
+                    'limit': limit,
+                    'offset': offset,
+                    'total': len(users_data)
+                }
+            }, status=status.HTTP_200_OK)
+            
+        except ValueError:
+            return Response({'error': 'Invalid limit or offset parameter'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Error listing users (internal): {str(e)}")
+            return Response({'error': 'Failed to list users'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
