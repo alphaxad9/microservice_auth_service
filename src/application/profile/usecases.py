@@ -168,7 +168,6 @@ class ProfileUseCase:
                     "location": location,
                     "language": language,
                     "theme": theme,
-                    "cover_image": cover_image,
                 }.items() if v is not None
             }
 

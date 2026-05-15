@@ -60,8 +60,11 @@ class ORMProfile(models.Model):
     avatar = models.URLField(null=True, blank=True, default=None)
     bio = models.TextField(null=True, blank=True, default="")
 
-    cover_image = models.URLField(blank=True, null=True)
-
+    cover_image = models.ImageField(
+        upload_to='cover_images/',  # Same pattern as profile_picture
+        blank=True,
+        null=True
+    )
     # === Timestamps ===
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(default=timezone.now)
